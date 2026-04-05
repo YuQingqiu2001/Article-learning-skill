@@ -132,3 +132,25 @@ def write_evolution_log(target: Path, date_str: str, new_items: list[str], reinf
         lines.append("- Continue collecting high-quality review papers.")
 
     target.write_text("\n".join(lines) + "\n", encoding="utf-8")
+
+
+
+def write_human_questions(target: Path, date_str: str, entries: list[dict[str, Any]]) -> None:
+    """Write questions for human guidance when AI review detects potential bias."""
+    target.parent.mkdir(parents=True, exist_ok=True)
+    lines = [f"# Human Guidance Needed - {date_str}", ""]
+    if not entries:
+        lines.append("- No bias flagged today.")
+    else:
+        for e in entries:
+            lines.append(f"## {e.get('file_name', 'unknown.pdf')}")
+            lines.append(f"- Agreement score: {e.get('agreement_score')}")
+            lines.append("- Issues:")
+            for issue in e.get('issues', []):
+                lines.append(f"  - {issue}")
+            lines.append("- Questions for human:")
+            for q in e.get('questions', []):
+                lines.append(f"  - {q}")
+            lines.append("")
+
+    target.write_text("\n".join(lines) + "\n", encoding="utf-8")

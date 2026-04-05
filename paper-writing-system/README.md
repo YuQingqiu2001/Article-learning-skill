@@ -9,7 +9,9 @@
 - 筛选最近 N 天新增/修改文献
 - 去重处理（`runtime/processed_files.json`）
 - 基于规则识别文献类型（Article / Review / Uncertain）
+- 一篇一篇学习（单篇处理后再进入下一篇）
 - 解析结构并抽象写作模式
+- 每篇学习后执行 AI 偏差复核；若存在偏差，生成人工问题清单
 - 产出 daily memory 与能力沉淀文件
 - 生成训练样本（Original Article 风格 + Review 风格）
 - 增加“类人学习演化”机制：重复出现模式自动升置信，形成学习状态与次日关注点
@@ -82,6 +84,7 @@ python scripts/learn_papers.py --dry-run --verbose
 - `--force`：忽略 `processed_files.json`，强制重处理
 - `--verbose`：输出详细日志
 - `--max-files`：最多处理多少篇 PDF（默认 `0` 表示不限制）
+- `--stop-on-bias`：任一文献被AI复核判定有偏差时立刻停止
 
 ## 输出说明
 - `runtime/memory/YYYY-MM-DD.md`：当日学习总结
@@ -90,6 +93,7 @@ python scripts/learn_papers.py --dry-run --verbose
 - `runtime/skills/learning_state.json`：模式暴露次数/加权分/状态（observing/candidate/high_conf）
 - `runtime/skills/evolution_log.md`：每日学习反思（新学到/被强化/仍不确定/下一步关注）
 - `runtime/processed_files.json`：处理状态索引
+- `runtime/memory/human_questions_YYYY-MM-DD.md`：AI复核发现偏差后自动生成的人类澄清问题
 - 当输入目录不存在时，当日 memory 会明确记录 `输入目录不存在: <path>`，便于排错
 
 ## 当前实现边界

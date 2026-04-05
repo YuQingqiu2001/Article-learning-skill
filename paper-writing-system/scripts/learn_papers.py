@@ -12,9 +12,10 @@ try:
 except ModuleNotFoundError:  # optional until real PDF processing
     PdfReader = None
 
+from ai_review_guard import simulate_ai_review
 from knowledge_extractor import extract_knowledge
 from learning_engine import PatternCandidate, extract_focus_items, load_learning_state, save_learning_state, update_learning_state
-from output_writer import append_unique_bullets, write_daily_memory, write_evolution_log, write_generated_examples
+from output_writer import append_unique_bullets, write_daily_memory, write_evolution_log, write_generated_examples, write_human_questions
 from parser_article import parse_article_structure
 from parser_review import parse_review_structure
 from pattern_extractor import (
@@ -43,6 +44,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--force", action="store_true", help="Ignore processed index and reprocess files")
     parser.add_argument("--verbose", action="store_true", help="Verbose logging")
     parser.add_argument("--max-files", type=int, default=0, help="Max number of PDFs to process (0 means no limit)")
+    parser.add_argument("--stop-on-bias", action="store_true", help="Stop run when one paper is flagged by AI review")
     return parser.parse_args()
 
 
@@ -165,6 +167,7 @@ def main() -> int:
 
     analyses: list[dict[str, Any]] = []
     date_str = today_str()
+    human_guidance_entries: list[dict[str, Any]] = []
 
     seen_this_run: set[tuple[str, str]] = set()
     for pdf in pdfs:
@@ -210,6 +213,25 @@ def main() -> int:
                 "knowledge": extract_knowledge(text, cls.paper_type),
             }
             analysis["pattern_brief"] = [p.get("pattern", p.get("phrase", "")) for group in analysis["patterns"].values() for p in group][:4]
+
+            # One-by-one learning guard: immediately verify each paper via AI review.
+            review_report = simulate_ai_review(analysis)
+            analysis["ai_review"] = review_report
+            if review_report.get("needs_human_guidance"):
+                analysis["status"] = "needs_human_guidance"
+                human_guidance_entries.append(
+                    {
+                        "file_name": analysis["file_name"],
+                        "agreement_score": review_report.get("agreement_score"),
+                        "issues": review_report.get("issues", []),
+                        "questions": review_report.get("questions", []),
+                    }
+                )
+                if args.stop_on_bias:
+                    analyses.append(analysis)
+                    logging.warning("Stopped by --stop-on-bias due to %s", analysis["file_name"])
+                    break
+
             analyses.append(analysis)
         except Exception as exc:  # noqa: BLE001
             logging.exception("Failed processing %s: %s", pdf.path, exc)
@@ -235,10 +257,12 @@ def main() -> int:
     if not analyses:
         msg = "无新增文献" if input_path.exists() else f"输入目录不存在: {args.input_dir}"
         write_daily_memory(memory_file, date_str, analyses, message=msg)
+        write_human_questions(base_dir / "runtime" / "memory" / f"human_questions_{date_str}.md", date_str, human_guidance_entries)
         logging.info("No new files to process.")
         return 0
 
     write_daily_memory(memory_file, date_str, analyses)
+    write_human_questions(base_dir / "runtime" / "memory" / f"human_questions_{date_str}.md", date_str, human_guidance_entries)
 
     if not args.dry_run:
         # 仅沉淀高质量且非失败结果

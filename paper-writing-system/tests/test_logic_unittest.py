@@ -16,8 +16,9 @@ THIS_DIR = Path(__file__).resolve().parent
 SCRIPTS_DIR = THIS_DIR.parent / "scripts"
 sys.path.insert(0, str(SCRIPTS_DIR))
 
+from ai_review_guard import simulate_ai_review
 from learning_engine import PatternCandidate, extract_focus_items, load_learning_state, update_learning_state
-from output_writer import append_unique_bullets
+from output_writer import append_unique_bullets, write_human_questions
 from parser_article import parse_article_structure
 from parser_review import parse_review_structure
 from pdf_classifier import classify_paper
@@ -73,6 +74,39 @@ class TestParsers(unittest.TestCase):
             headers=["Mechanism section"],
         )
         self.assertIn(parsed["organization_type"], {"mechanism-based", "disease-based", "method-based", "timeline-based", "mixed"})
+
+
+class TestAIReviewGuard(unittest.TestCase):
+    def test_ai_review_flags_low_quality_uncertain(self) -> None:
+        report = simulate_ai_review(
+            {
+                "paper_type": "uncertain",
+                "quality_flag": "low",
+                "detected_sections": [],
+                "patterns": {},
+            }
+        )
+        self.assertTrue(report["needs_human_guidance"])
+        self.assertGreaterEqual(len(report["questions"]), 3)
+
+    def test_write_human_questions_file(self) -> None:
+        with tempfile.TemporaryDirectory() as td:
+            target = Path(td) / "human_questions_2026-04-05.md"
+            write_human_questions(
+                target,
+                "2026-04-05",
+                [
+                    {
+                        "file_name": "a.pdf",
+                        "agreement_score": 0.4,
+                        "issues": ["low quality"],
+                        "questions": ["Q1", "Q2", "Q3"],
+                    }
+                ],
+            )
+            text = target.read_text(encoding="utf-8")
+            self.assertIn("a.pdf", text)
+            self.assertIn("Q1", text)
 
 
 class TestLearningAndDedup(unittest.TestCase):

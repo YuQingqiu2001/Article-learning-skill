@@ -27,6 +27,7 @@ description: 手动触发的科研论文学习与SCI写作能力沉淀skill。�
 - 学习演化状态：`runtime/skills/learning_state.json`
 - 学习复盘日志：`runtime/skills/evolution_log.md`
 - 状态索引：`runtime/processed_files.json`
+- 人工澄清问题：`runtime/memory/human_questions_YYYY-MM-DD.md`
 
 ## 4) 核心流程（必须按序执行）
 1. 扫描目录并筛选最近N天新增或修改PDF。
@@ -39,6 +40,7 @@ description: 手动触发的科研论文学习与SCI写作能力沉淀skill。�
 8. 生成当日总结与训练样本。
 9. 非 dry-run 下更新核心 skills 文件与 processed 索引。
 10. 基于重复暴露做“类人学习演化”：pattern 从 observing -> candidate -> high_conf。
+11. 每篇学习完成后立即执行AI复核；若发现偏差，生成对人的提问并暂停该篇沉淀。
 
 ## 5) Article 解析协议
 ### 5.1 必提结构
@@ -149,3 +151,10 @@ python scripts/learn_papers.py --input-dir "D:\\sci文献数据" --days 1 --verb
   - candidate：重复出现（>=2）
   - high_conf：多次且加权分达阈值（默认 count>=3 且 score>=4.0）
 - 每日复盘：输出 `evolution_log.md`，包含“今天学到什么、哪些被强化、哪些仍不确定、明日重点”。
+
+
+## 15) AI复核规则（单篇学习后立即执行）
+- 对每篇文献执行 second-pass 复核（当前为规则模拟，后续可接LLM）。
+- 若复核分数过低或存在结构/质量风险，标记 `needs_human_guidance`。
+- 被标记文献不得写入核心skills，只能进入 memory 与 human_questions 文件。
+- 必须向人提出最少3个澄清问题（学习重点、文献类型、哪些结论需uncertain）。
