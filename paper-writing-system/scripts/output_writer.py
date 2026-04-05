@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 from pathlib import Path
+import re
 from typing import Any
 
 
@@ -42,17 +43,28 @@ def write_daily_memory(memory_file: Path, date_str: str, analyses: list[dict[str
 
 
 def append_unique_bullets(target: Path, heading: str, bullets: list[str]) -> None:
+    """Append bullets with semantic de-duplication.
+
+    If only source differs (same pattern text), keep one line to avoid memory inflation.
+    """
     target.parent.mkdir(parents=True, exist_ok=True)
     if not target.exists():
         target.write_text(f"# {heading}\n\n", encoding="utf-8")
 
     content = target.read_text(encoding="utf-8")
-    existing = {line.strip() for line in content.splitlines() if line.strip().startswith("-")}
+    existing_lines = [line.strip() for line in content.splitlines() if line.strip().startswith("-")]
+
+    def canonical(line: str) -> str:
+        base = re.sub(r"\s*\(source:.*?\)\s*$", "", line)
+        return re.sub(r"\s+", " ", base).strip().lower()
+
+    existing_keys = {canonical(x.removeprefix("- ")) for x in existing_lines}
     new_lines = []
     for b in bullets:
-        item = f"- {b}"
-        if item not in existing:
-            new_lines.append(item)
+        key = canonical(b)
+        if key not in existing_keys:
+            new_lines.append(f"- {b}")
+            existing_keys.add(key)
 
     if new_lines:
         with target.open("a", encoding="utf-8") as f:

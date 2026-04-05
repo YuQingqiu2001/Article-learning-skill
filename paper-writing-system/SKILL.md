@@ -109,7 +109,9 @@ description: 手动触发的科研论文学习与SCI写作能力沉淀skill。�
 ## 9) 质量控制规则
 - 避免重复写入（去重键：pattern文本 + 来源线索）。
 - 低质量PDF（文本过短、结构缺失严重）打 `quality_flag=low`，仅写入memory，不写核心skills。
+- 学习优先级：Review > Article，high quality > medium > low。
 - Review 学习权重高于普通 Article。
+- 模式写入执行“语义去重”：同一模式即便来源不同，也不重复膨胀skills文件。
 - 严禁把不确定内容写成确定规律。
 - 严禁把解析失败内容写入核心 skills 文件。
 - 原则：先保守抽取，再逐步增强；沉淀优先质量，不追求一次提取过多。

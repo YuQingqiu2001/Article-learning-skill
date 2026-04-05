@@ -135,6 +135,16 @@ def to_candidates(analysis: dict[str, Any]) -> list[PatternCandidate]:
     return out
 
 
+
+
+def learning_priority_key(analysis: dict[str, Any]) -> tuple[int, int]:
+    """Higher priority first: review > article, high quality > medium."""
+    type_score = 2 if analysis.get("paper_type") == "review" else 1
+    q = analysis.get("quality_flag")
+    quality_score = 3 if q == "high" else 2 if q == "medium" else 1
+    return type_score, quality_score
+
+
 def main() -> int:
     args = parse_args()
     configure_logging(args.verbose)
@@ -223,6 +233,7 @@ def main() -> int:
     if not args.dry_run:
         # 仅沉淀高质量且非失败结果
         valid = [a for a in analyses if a["status"] == "ok" and a["quality_flag"] != "low"]
+        valid.sort(key=learning_priority_key, reverse=True)
 
         abs_bullets = []
         res_bullets = []
@@ -290,7 +301,12 @@ def main() -> int:
             }
             for a in analyses
         )
-        save_json(processed_path, processed_records)
+        # de-duplicate by (file_path, file_hash), keeping latest record
+        unique_map: dict[tuple[str, str], dict[str, Any]] = {}
+        for rec in processed_records:
+            key = (rec.get("file_path", ""), rec.get("file_hash", ""))
+            unique_map[key] = rec
+        save_json(processed_path, list(unique_map.values()))
 
     logging.info("Done. Analyses: %s", len(analyses))
     return 0
