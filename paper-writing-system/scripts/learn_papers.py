@@ -7,17 +7,13 @@ import re
 from pathlib import Path
 from typing import Any
 
-try:
-    from pypdf import PdfReader
-except ModuleNotFoundError:  # optional until real PDF processing
-    PdfReader = None
-
 from ai_review_guard import simulate_ai_review
 from feedback_loop import apply_feedback, load_feedback_map
 from knowledge_extractor import extract_knowledge
 from learning_engine import PatternCandidate, extract_focus_items, load_learning_state, save_learning_state, update_learning_state
 from output_writer import append_unique_bullets, write_daily_memory, write_evolution_log, write_generated_examples, write_human_questions
 from parser_article import parse_article_structure
+from pdf_reader import extract_pdf_content
 from parser_review import parse_review_structure
 from pattern_extractor import (
     abstract_patterns,
@@ -47,6 +43,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--max-files", type=int, default=0, help="Max number of PDFs to process (0 means no limit)")
     parser.add_argument("--stop-on-bias", action="store_true", help="Stop run when one paper is flagged by AI review")
     parser.add_argument("--feedback-file", default="", help="Optional JSON file for human feedback overrides")
+    parser.add_argument("--max-pages", type=int, default=30, help="Max PDF pages to read per paper")
     return parser.parse_args()
 
 
@@ -54,40 +51,12 @@ def configure_logging(verbose: bool) -> None:
     logging.basicConfig(level=logging.DEBUG if verbose else logging.INFO, format="%(levelname)s: %(message)s")
 
 
-def extract_text_and_sections(pdf_path: Path) -> tuple[str, list[str], dict[str, str]]:
+def extract_text_and_sections(pdf_path: Path, max_pages: int) -> tuple[str, list[str], dict[str, str], dict[str, Any]]:
     """Extract plain text and rough section map from PDF.
 
-    TODO: switch to richer parser with layout-aware section detection.
+    Uses robust multi-column capable backend when available.
     """
-    if PdfReader is None:
-        raise RuntimeError("pypdf is required for PDF text extraction. Install requirements.txt first.")
-
-    reader = PdfReader(str(pdf_path))
-    text = "\n".join((p.extract_text() or "") for p in reader.pages[:20])
-
-    headers: list[str] = []
-    section_map: dict[str, str] = {}
-    keys = ["abstract", "introduction", "methods", "materials and methods", "results", "discussion", "conclusion"]
-
-    current = "body"
-    bucket: dict[str, list[str]] = {current: []}
-
-    for line in text.splitlines():
-        clean = line.strip()
-        if not clean:
-            continue
-        low = clean.lower()
-        if len(clean) <= 80 and any(k == low or low.startswith(k + " ") for k in keys):
-            current = "methods" if low.startswith("materials and methods") else low.split()[0]
-            headers.append(clean)
-            bucket.setdefault(current, [])
-            continue
-        bucket.setdefault(current, []).append(clean)
-
-    for k, lines in bucket.items():
-        section_map[k] = "\n".join(lines)
-
-    return text, headers, section_map
+    return extract_pdf_content(pdf_path, max_pages=max_pages)
 
 
 def quality_flag(text: str, section_map: dict[str, str]) -> str:
@@ -184,7 +153,7 @@ def main() -> int:
             continue
 
         try:
-            text, headers, sections = extract_text_and_sections(pdf.path)
+            text, headers, sections, reader_meta = extract_text_and_sections(pdf.path, max_pages=args.max_pages)
             cls = classify_paper(pdf.path.name, text, headers)
             qf = quality_flag(text, sections)
 
@@ -214,6 +183,7 @@ def main() -> int:
                     "scientific_phrases": scientific_phrases({"paper_type": cls.paper_type}),
                 },
                 "knowledge": extract_knowledge(text, cls.paper_type),
+                "reader_backend": reader_meta.get("backend", "unknown"),
             }
             analysis["pattern_brief"] = [p.get("pattern", p.get("phrase", "")) for group in analysis["patterns"].values() for p in group][:4]
 

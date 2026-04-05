@@ -66,6 +66,8 @@ python -m venv .venv
 pip install -r requirements.txt
 ```
 
+> 依赖说明：`pymupdf` 用于复杂排版PDF读取，`pypdf` 作为回退后端。
+
 ## 手动运行方式
 ```bash
 cd paper-writing-system
@@ -86,6 +88,7 @@ python scripts/learn_papers.py --dry-run --verbose
 - `--max-files`：最多处理多少篇 PDF（默认 `0` 表示不限制）
 - `--stop-on-bias`：任一文献被AI复核判定有偏差时立刻停止
 - `--feedback-file`：人工反馈JSON文件，用于修正类型判断/学习重点/是否允许沉淀
+- `--max-pages`：每篇最多读取页数（默认 `30`）
 
 ## 输出说明
 - `runtime/memory/YYYY-MM-DD.md`：当日学习总结
@@ -99,6 +102,7 @@ python scripts/learn_papers.py --dry-run --verbose
 
 ## 当前实现边界
 - 已实现规则驱动骨架（结构识别、基础分类、占位抽取、Markdown输出）
+- PDF读取优先使用 `PyMuPDF`（适合Nature等复杂排版，多栏block提取），失败时回退到 `pypdf`
 - 未实现深度语义理解模型与复杂表格/图像解析
 - 未实现调度系统（刻意保持手动触发）
 
@@ -135,6 +139,7 @@ python scripts/openclaw_entry.py
 - `OPENCLAW_FORCE`
 - `OPENCLAW_VERBOSE`
 - `OPENCLAW_MAX_FILES`
+- `OPENCLAW_MAX_PAGES`
 - `OPENCLAW_STOP_ON_BIAS`
 - `OPENCLAW_FEEDBACK_FILE`
 

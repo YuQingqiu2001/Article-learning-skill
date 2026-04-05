@@ -34,6 +34,7 @@ description: 手动触发的科研论文学习与SCI写作能力沉淀skill。�
 2. 与 `processed_files.json` 去重（除非 `--force`）。
 3. 无新文件时：写入当日memory“无新增文献”，终止。
 4. 逐篇提取基础文本与结构信息（保守抽取）。
+   - 读取后端优先 `PyMuPDF`（多栏复杂版式），失败时回退 `pypdf`。
 5. 识别文献类型（Article/Review/Uncertain）。
 6. 按类型协议解析。
 7. 统一执行写作模式抽象、知识提取、质量标注。
@@ -139,6 +140,7 @@ python scripts/learn_papers.py --input-dir "D:\\sci文献数据" --days 1 --verb
 
 ## 13) 注意事项
 - 当前为 v0.1 skeleton：规则引擎 + 占位抽取，保证可运行与可维护。
+- 针对Nature等复杂排版，默认采用 `PyMuPDF` block提取增强鲁棒性。
 - 后续可替换文本提取器（如更强PDF parser）与LLM语义解析器（见脚本TODO）。
 
 ## 14) 类人学习演化策略

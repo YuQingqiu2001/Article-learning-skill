@@ -20,6 +20,7 @@ def build_args_from_env() -> list[str]:
     max_files = os.getenv("OPENCLAW_MAX_FILES", "0")
     stop_on_bias = os.getenv("OPENCLAW_STOP_ON_BIAS", "0") == "1"
     feedback_file = os.getenv("OPENCLAW_FEEDBACK_FILE", "")
+    max_pages = os.getenv("OPENCLAW_MAX_PAGES", "30")
 
     args = [
         "--input-dir",
@@ -28,6 +29,8 @@ def build_args_from_env() -> list[str]:
         days,
         "--max-files",
         max_files,
+        "--max-pages",
+        max_pages,
     ]
     if dry_run:
         args.append("--dry-run")

@@ -22,6 +22,7 @@ from learning_engine import PatternCandidate, extract_focus_items, load_learning
 from output_writer import append_unique_bullets, write_human_questions
 from openclaw_entry import build_args_from_env
 from parser_article import parse_article_structure
+from pdf_reader import _sectionize_lines
 from parser_review import parse_review_structure
 from pdf_classifier import classify_paper
 
@@ -78,6 +79,28 @@ class TestParsers(unittest.TestCase):
         self.assertIn(parsed["organization_type"], {"mechanism-based", "disease-based", "method-based", "timeline-based", "mixed"})
 
 
+class TestPDFReader(unittest.TestCase):
+    def test_sectionize_lines_handles_imrad_headers(self) -> None:
+        text, headers, section_map = _sectionize_lines(
+            [
+                "Abstract",
+                "A summary.",
+                "Introduction",
+                "Intro body.",
+                "Methods",
+                "Method body.",
+                "Results",
+                "Result body.",
+                "Discussion",
+                "Discussion body.",
+            ]
+        )
+        self.assertTrue(text)
+        self.assertIn("Abstract", headers)
+        self.assertIn("abstract", section_map)
+        self.assertIn("results", section_map)
+
+
 class TestAIReviewGuard(unittest.TestCase):
     def test_ai_review_flags_low_quality_uncertain(self) -> None:
         report = simulate_ai_review(
@@ -125,11 +148,13 @@ class TestOpenclawEntry(unittest.TestCase):
             os.environ["OPENCLAW_MAX_FILES"] = "3"
             os.environ["OPENCLAW_STOP_ON_BIAS"] = "1"
             os.environ["OPENCLAW_FEEDBACK_FILE"] = "feedback.json"
+            os.environ["OPENCLAW_MAX_PAGES"] = "25"
 
             args = build_args_from_env()
             self.assertIn("--input-dir", args)
             self.assertIn("--days", args)
             self.assertIn("--max-files", args)
+            self.assertIn("--max-pages", args)
             self.assertIn("--dry-run", args)
             self.assertIn("--force", args)
             self.assertIn("--verbose", args)
