@@ -1,0 +1,26 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "ProcessedFileRecord",
+  "type": "object",
+  "required": [
+    "file_path",
+    "file_name",
+    "modified_time",
+    "file_hash",
+    "processed_date",
+    "paper_type",
+    "quality_flag",
+    "status"
+  ],
+  "properties": {
+    "file_path": {"type": "string"},
+    "file_name": {"type": "string"},
+    "modified_time": {"type": "string"},
+    "file_hash": {"type": "string"},
+    "processed_date": {"type": "string"},
+    "paper_type": {"type": "string", "enum": ["article", "review", "uncertain"]},
+    "quality_flag": {"type": "string", "enum": ["high", "medium", "low"]},
+    "status": {"type": "string"}
+  },
+  "additionalProperties": true
+}
