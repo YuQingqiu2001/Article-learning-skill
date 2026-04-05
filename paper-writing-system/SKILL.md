@@ -24,8 +24,6 @@ description: 手动触发的科研论文学习与SCI写作能力沉淀skill。�
   - `runtime/skills/review_structures.md`
   - `runtime/skills/scientific_phrases.md`
 - 训练样本：`runtime/skills/generated_examples/YYYY-MM-DD.md`
-- 学习演化状态：`runtime/skills/learning_state.json`
-- 学习复盘日志：`runtime/skills/evolution_log.md`
 - 状态索引：`runtime/processed_files.json`
 
 ## 4) 核心流程（必须按序执行）
@@ -38,7 +36,6 @@ description: 手动触发的科研论文学习与SCI写作能力沉淀skill。�
 7. 统一执行写作模式抽象、知识提取、质量标注。
 8. 生成当日总结与训练样本。
 9. 非 dry-run 下更新核心 skills 文件与 processed 索引。
-10. 基于重复暴露做“类人学习演化”：pattern 从 observing -> candidate -> high_conf。
 
 ## 5) Article 解析协议
 ### 5.1 必提结构
@@ -109,9 +106,7 @@ description: 手动触发的科研论文学习与SCI写作能力沉淀skill。�
 ## 9) 质量控制规则
 - 避免重复写入（去重键：pattern文本 + 来源线索）。
 - 低质量PDF（文本过短、结构缺失严重）打 `quality_flag=low`，仅写入memory，不写核心skills。
-- 学习优先级：Review > Article，high quality > medium > low。
 - Review 学习权重高于普通 Article。
-- 模式写入执行“语义去重”：同一模式即便来源不同，也不重复膨胀skills文件。
 - 严禁把不确定内容写成确定规律。
 - 严禁把解析失败内容写入核心 skills 文件。
 - 原则：先保守抽取，再逐步增强；沉淀优先质量，不追求一次提取过多。
@@ -138,14 +133,3 @@ python scripts/learn_papers.py --input-dir "D:\\sci文献数据" --days 1 --verb
 ## 13) 注意事项
 - 当前为 v0.1 skeleton：规则引擎 + 占位抽取，保证可运行与可维护。
 - 后续可替换文本提取器（如更强PDF parser）与LLM语义解析器（见脚本TODO）。
-
-## 14) 类人学习演化策略
-- 核心思想：一次阅读只产生“候选认知”，多次高质量重复观察后才升格为高置信规律。
-- 证据累积：
-  - 每条模式记录 `count`（出现次数）与 `weighted_score`（按文献质量与类型加权）。
-  - Review 与 high-quality article 权重更高。
-- 状态机：
-  - observing：首次或证据薄弱
-  - candidate：重复出现（>=2）
-  - high_conf：多次且加权分达阈值（默认 count>=3 且 score>=4.0）
-- 每日复盘：输出 `evolution_log.md`，包含“今天学到什么、哪些被强化、哪些仍不确定、明日重点”。
