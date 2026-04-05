@@ -158,6 +158,7 @@ python scripts/learn_papers.py --input-dir "D:\\sci文献数据" --days 1 --verb
 - 若复核分数过低或存在结构/质量风险，标记 `needs_human_guidance`。
 - 被标记文献不得写入核心skills，只能进入 memory 与 human_questions 文件。
 - 必须向人提出最少3个澄清问题（学习重点、文献类型、哪些结论需uncertain）。
+- 支持下一轮通过 `--feedback-file` 注入人工反馈，修正学习方向并决定是否允许沉淀。
 
 
 ## 16) Openclaw 集成约定

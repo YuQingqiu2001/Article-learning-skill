@@ -85,6 +85,7 @@ python scripts/learn_papers.py --dry-run --verbose
 - `--verbose`：输出详细日志
 - `--max-files`：最多处理多少篇 PDF（默认 `0` 表示不限制）
 - `--stop-on-bias`：任一文献被AI复核判定有偏差时立刻停止
+- `--feedback-file`：人工反馈JSON文件，用于修正类型判断/学习重点/是否允许沉淀
 
 ## 输出说明
 - `runtime/memory/YYYY-MM-DD.md`：当日学习总结
@@ -135,3 +136,17 @@ python scripts/openclaw_entry.py
 - `OPENCLAW_VERBOSE`
 - `OPENCLAW_MAX_FILES`
 - `OPENCLAW_STOP_ON_BIAS`
+- `OPENCLAW_FEEDBACK_FILE`
+
+
+### 反馈文件格式（JSON）
+```json
+{
+  "paper_a.pdf": {
+    "paper_type": "review",
+    "learn_focus": "mechanism",
+    "allow_deposit": true,
+    "notes": "Focus on claim-evidence-synthesis"
+  }
+}
+```

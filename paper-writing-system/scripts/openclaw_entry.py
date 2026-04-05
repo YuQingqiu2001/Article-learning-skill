@@ -19,6 +19,7 @@ def build_args_from_env() -> list[str]:
     verbose = os.getenv("OPENCLAW_VERBOSE", "1") == "1"
     max_files = os.getenv("OPENCLAW_MAX_FILES", "0")
     stop_on_bias = os.getenv("OPENCLAW_STOP_ON_BIAS", "0") == "1"
+    feedback_file = os.getenv("OPENCLAW_FEEDBACK_FILE", "")
 
     args = [
         "--input-dir",
@@ -36,6 +37,8 @@ def build_args_from_env() -> list[str]:
         args.append("--verbose")
     if stop_on_bias:
         args.append("--stop-on-bias")
+    if feedback_file:
+        args.extend(["--feedback-file", feedback_file])
     return args
 
 

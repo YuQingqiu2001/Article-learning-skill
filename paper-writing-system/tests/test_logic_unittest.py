@@ -17,6 +17,7 @@ SCRIPTS_DIR = THIS_DIR.parent / "scripts"
 sys.path.insert(0, str(SCRIPTS_DIR))
 
 from ai_review_guard import simulate_ai_review
+from feedback_loop import apply_feedback, load_feedback_map
 from learning_engine import PatternCandidate, extract_focus_items, load_learning_state, update_learning_state
 from output_writer import append_unique_bullets, write_human_questions
 from openclaw_entry import build_args_from_env
@@ -123,6 +124,7 @@ class TestOpenclawEntry(unittest.TestCase):
             os.environ["OPENCLAW_VERBOSE"] = "1"
             os.environ["OPENCLAW_MAX_FILES"] = "3"
             os.environ["OPENCLAW_STOP_ON_BIAS"] = "1"
+            os.environ["OPENCLAW_FEEDBACK_FILE"] = "feedback.json"
 
             args = build_args_from_env()
             self.assertIn("--input-dir", args)
@@ -132,9 +134,44 @@ class TestOpenclawEntry(unittest.TestCase):
             self.assertIn("--force", args)
             self.assertIn("--verbose", args)
             self.assertIn("--stop-on-bias", args)
+            self.assertIn("--feedback-file", args)
         finally:
             os.environ.clear()
             os.environ.update(backup)
+
+
+class TestFeedbackLoop(unittest.TestCase):
+    def test_load_feedback_map_and_apply(self) -> None:
+        import json
+
+        with tempfile.TemporaryDirectory() as td:
+            fp = Path(td) / "feedback.json"
+            fp.write_text(
+                json.dumps(
+                    {
+                        "a.pdf": {
+                            "paper_type": "review",
+                            "learn_focus": "mechanism",
+                            "allow_deposit": True,
+                            "notes": "confirmed by human",
+                        }
+                    },
+                    ensure_ascii=False,
+                ),
+                encoding="utf-8",
+            )
+            m = load_feedback_map(fp)
+            self.assertIn("a.pdf", m)
+
+            analysis = {
+                "file_name": "a.pdf",
+                "paper_type": "uncertain",
+                "status": "needs_human_guidance",
+            }
+            updated = apply_feedback(analysis, m["a.pdf"])
+            self.assertEqual(updated["paper_type"], "review")
+            self.assertEqual(updated["status"], "ok")
+            self.assertEqual(updated["learn_focus"], "mechanism")
 
 
 class TestLearningAndDedup(unittest.TestCase):

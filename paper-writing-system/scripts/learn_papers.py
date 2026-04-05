@@ -13,6 +13,7 @@ except ModuleNotFoundError:  # optional until real PDF processing
     PdfReader = None
 
 from ai_review_guard import simulate_ai_review
+from feedback_loop import apply_feedback, load_feedback_map
 from knowledge_extractor import extract_knowledge
 from learning_engine import PatternCandidate, extract_focus_items, load_learning_state, save_learning_state, update_learning_state
 from output_writer import append_unique_bullets, write_daily_memory, write_evolution_log, write_generated_examples, write_human_questions
@@ -45,6 +46,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--verbose", action="store_true", help="Verbose logging")
     parser.add_argument("--max-files", type=int, default=0, help="Max number of PDFs to process (0 means no limit)")
     parser.add_argument("--stop-on-bias", action="store_true", help="Stop run when one paper is flagged by AI review")
+    parser.add_argument("--feedback-file", default="", help="Optional JSON file for human feedback overrides")
     return parser.parse_args()
 
 
@@ -168,6 +170,7 @@ def main() -> int:
     analyses: list[dict[str, Any]] = []
     date_str = today_str()
     human_guidance_entries: list[dict[str, Any]] = []
+    feedback_map = load_feedback_map(Path(args.feedback_file)) if args.feedback_file else {}
 
     seen_this_run: set[tuple[str, str]] = set()
     for pdf in pdfs:
@@ -227,10 +230,15 @@ def main() -> int:
                         "questions": review_report.get("questions", []),
                     }
                 )
-                if args.stop_on_bias:
-                    analyses.append(analysis)
-                    logging.warning("Stopped by --stop-on-bias due to %s", analysis["file_name"])
-                    break
+
+            # Human feedback loop: allow curated override from previous guidance cycle.
+            if analysis["file_name"] in feedback_map:
+                analysis = apply_feedback(analysis, feedback_map[analysis["file_name"]])
+
+            if args.stop_on_bias and analysis.get("status") == "needs_human_guidance":
+                analyses.append(analysis)
+                logging.warning("Stopped by --stop-on-bias due to %s", analysis["file_name"])
+                break
 
             analyses.append(analysis)
         except Exception as exc:  # noqa: BLE001
