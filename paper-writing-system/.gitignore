@@ -1,0 +1,15 @@
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+.venv/
+venv/
+*.log
+.DS_Store
+Thumbs.db
+
+runtime/processed_files.json
+runtime/memory/*.md
+runtime/skills/generated_examples/*.md
+runtime/**/*.tmp
