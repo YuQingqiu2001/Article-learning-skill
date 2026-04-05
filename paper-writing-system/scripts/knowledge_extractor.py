@@ -1,7 +1,14 @@
 """Conservative knowledge extractor with uncertainty tagging."""
 from __future__ import annotations
 
+import re
 from typing import Any
+
+# Use word-boundary matching to avoid substring false positives
+# (e.g. "gene" matching "general", "method" matching "methodology").
+_MECHANISM_RE = re.compile(r"\b(?:pathway|mechanism|signaling)\b", re.IGNORECASE)
+_MOLECULAR_RE = re.compile(r"\b(?:genes?|protein|molecular|receptor|enzyme)\b", re.IGNORECASE)
+_STUDY_RE = re.compile(r"\b(?:randomized|cohort|meta-analysis|cross-sectional|case-control)\b", re.IGNORECASE)
 
 
 def extract_knowledge(text: str, paper_type: str) -> list[dict[str, Any]]:
@@ -9,14 +16,13 @@ def extract_knowledge(text: str, paper_type: str) -> list[dict[str, Any]]:
 
     TODO: Replace keyword-based extraction with evidence-grounded semantic extractor.
     """
-    low = text.lower()
     items: list[dict[str, Any]] = []
 
-    if "pathway" in low or "mechanism" in low:
+    if _MECHANISM_RE.search(text):
         items.append(_item("新机制或通路", "Potential mechanism/pathway discussed", paper_type))
-    if "gene" in low or "protein" in low or "molecular" in low:
+    if _MOLECULAR_RE.search(text):
         items.append(_item("基因或分子", "Potential gene/molecular factor reported", paper_type))
-    if "randomized" in low or "cohort" in low or "meta-analysis" in low:
+    if _STUDY_RE.search(text):
         items.append(_item("研究方法", "Potential study design pattern detected", paper_type))
     if paper_type == "review":
         items.append(

@@ -18,12 +18,13 @@ sys.path.insert(0, str(SCRIPTS_DIR))
 
 from ai_review_guard import simulate_ai_review
 from feedback_loop import apply_feedback, load_feedback_map
+from knowledge_extractor import extract_knowledge
 from learning_engine import PatternCandidate, extract_focus_items, load_learning_state, update_learning_state
 from output_writer import append_unique_bullets, write_human_questions
 from openclaw_entry import build_args_from_env
 from install_openclaw import resolve_codex_home, install_skill, SKILL_NAME
-from parser_article import parse_article_structure
-from pdf_reader import _sectionize_lines
+from parser_article import parse_article_structure, label_abstract_sentences
+from pdf_reader import _sectionize_lines, _match_section_heading
 from parser_review import parse_review_structure
 from pdf_classifier import classify_paper
 
@@ -263,6 +264,69 @@ class TestLearningAndDedup(unittest.TestCase):
             )
             txt = f.read_text(encoding="utf-8")
             self.assertEqual(txt.count("Background -> Objective -> Methods -> Results -> Conclusion"), 1)
+
+
+class TestKnowledgeExtractor(unittest.TestCase):
+    def test_no_false_positive_gene_in_general(self) -> None:
+        """'gene' keyword must not match 'general'."""
+        items = extract_knowledge("This is a general overview of the topic.", "article")
+        types = [i["type"] for i in items]
+        self.assertNotIn("基因或分子", types)
+
+    def test_gene_matches_actual_gene(self) -> None:
+        items = extract_knowledge("The gene expression was significantly upregulated.", "article")
+        types = [i["type"] for i in items]
+        self.assertIn("基因或分子", types)
+
+
+class TestAbstractLabeling(unittest.TestCase):
+    def test_semantic_labels_over_positional(self) -> None:
+        abstract = (
+            "Cancer remains a leading cause of death. "
+            "This study aimed to evaluate a novel biomarker. "
+            "We recruited 200 patients and measured serum levels. "
+            "Results showed a significant increase. "
+            "In conclusion, this has diagnostic potential."
+        )
+        roles = label_abstract_sentences(abstract)
+        self.assertEqual(len(roles), 5)
+        self.assertEqual(roles[0]["label"], "Background")
+        self.assertEqual(roles[1]["label"], "Objective")
+        self.assertEqual(roles[2]["label"], "Methods")
+        self.assertEqual(roles[3]["label"], "Results")
+        self.assertEqual(roles[4]["label"], "Conclusion")
+
+    def test_three_sentence_abstract_not_all_same(self) -> None:
+        """A 3-sentence abstract should not have all sentences labeled 'Conclusion'."""
+        roles = label_abstract_sentences("Background info. We aimed to test X. In conclusion, Y.")
+        labels = [r["label"] for r in roles]
+        self.assertNotEqual(labels, ["Conclusion", "Conclusion", "Conclusion"])
+
+
+class TestSectionHeadingDetection(unittest.TestCase):
+    def test_materials_and_methods(self) -> None:
+        self.assertEqual(_match_section_heading("Materials and Methods"), "methods")
+        self.assertEqual(_match_section_heading("Materials & Methods"), "methods")
+
+    def test_numbered_sections(self) -> None:
+        self.assertEqual(_match_section_heading("1. Introduction"), "introduction")
+        self.assertEqual(_match_section_heading("3. Results"), "results")
+
+    def test_aliases(self) -> None:
+        self.assertEqual(_match_section_heading("Methodology"), "methods")
+        self.assertEqual(_match_section_heading("Findings"), "results")
+        self.assertEqual(_match_section_heading("Background"), "introduction")
+        self.assertEqual(_match_section_heading("Conclusions"), "conclusion")
+
+    def test_long_line_rejected(self) -> None:
+        self.assertIsNone(_match_section_heading("Abstract of a study about the introduction of new methods in this field"))
+
+
+class TestFeedbackAllowDeposit(unittest.TestCase):
+    def test_allow_deposit_for_failed_extract(self) -> None:
+        analysis = {"file_name": "b.pdf", "paper_type": "article", "status": "failed_extract"}
+        updated = apply_feedback(analysis, {"allow_deposit": True})
+        self.assertEqual(updated["status"], "ok")
 
 
 if __name__ == "__main__":

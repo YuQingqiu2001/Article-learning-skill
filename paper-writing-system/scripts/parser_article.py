@@ -27,13 +27,41 @@ def parse_article_structure(text: str, section_map: dict[str, str]) -> dict[str,
     }
 
 
+_ROLE_CUES: list[tuple[str, list[str]]] = [
+    ("Background", ["background", "currently", "recent studies", "it is known", "emerging", "prevalence", "has been", "remains"]),
+    ("Objective", ["aim", "objective", "purpose", "this study", "we examined", "aimed", "sought to", "investigated", "determine whether"]),
+    ("Methods", ["method", "participant", "sample", "recruited", "performed", "analyzed", "measured", "collected", "randomized", "enrolled"]),
+    ("Results", ["result", "found", "showed", "demonstrated", "observed", "significant", "increased", "decreased", "associated", "p <", "p="]),
+    ("Conclusion", ["conclusion", "conclude", "suggest", "implication", "in summary", "taken together", "these findings", "overall"]),
+]
+
+
 def label_abstract_sentences(abstract: str) -> list[dict[str, str]]:
+    """Label abstract sentences using semantic cues, with positional fallback."""
     labels = ["Background", "Objective", "Methods", "Results", "Conclusion"]
     sentences = [s.strip() for s in re.split(r"(?<=[.!?])\s+", abstract) if s.strip()]
+    if not sentences:
+        return []
+
     tagged = []
     for idx, sent in enumerate(sentences):
-        label = labels[min(idx, len(labels) - 1)]
-        tagged.append({"label": label, "sentence": sent})
+        sent_lower = sent.lower()
+        best_label = None
+        best_score = 0
+
+        for role, cues in _ROLE_CUES:
+            score = sum(1 for cue in cues if cue in sent_lower)
+            if score > best_score:
+                best_score = score
+                best_label = role
+
+        if best_label is None or best_score == 0:
+            # Fallback: assign by relative position in abstract
+            pos = idx / max(len(sentences), 1)
+            label_idx = min(int(pos * len(labels)), len(labels) - 1)
+            best_label = labels[label_idx]
+
+        tagged.append({"label": best_label, "sentence": sent})
     return tagged
 
 

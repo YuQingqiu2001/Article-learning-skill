@@ -20,7 +20,18 @@ except ModuleNotFoundError:  # pragma: no cover
     PdfReader = None
 
 
-SECTION_KEYS = ["abstract", "introduction", "methods", "materials and methods", "results", "discussion", "conclusion"]
+# Canonical section names mapped to all known aliases.
+_SECTION_ALIASES: dict[str, list[str]] = {
+    "abstract": ["abstract", "summary"],
+    "introduction": ["introduction", "background"],
+    "methods": ["methods", "materials and methods", "materials & methods", "methodology",
+                "experimental methods", "experimental procedures", "patients and methods", "study design"],
+    "results": ["results", "findings"],
+    "discussion": ["discussion"],
+    "conclusion": ["conclusion", "conclusions", "concluding remarks"],
+}
+# Flat list for backward compat (used nowhere externally, but kept for safety).
+SECTION_KEYS = list(_SECTION_ALIASES.keys())
 
 
 def extract_pdf_content(pdf_path: Path, max_pages: int = 30) -> tuple[str, list[str], dict[str, str], dict[str, Any]]:
@@ -66,15 +77,29 @@ def _extract_with_pypdf(pdf_path: Path, max_pages: int = 30) -> tuple[str, list[
     return _sectionize_lines(lines)
 
 
+def _match_section_heading(line: str) -> str | None:
+    """Return canonical section name if *line* looks like a section heading, else None."""
+    if len(line) > 90:
+        return None
+    # Strip optional numbering like "1.", "2)", "3 " at the start
+    import re
+    stripped = re.sub(r"^\d+[\.\)]\s*", "", line).strip()
+    low = stripped.lower().rstrip(":")
+    for canon, aliases in _SECTION_ALIASES.items():
+        if low in aliases:
+            return canon
+    return None
+
+
 def _sectionize_lines(lines: list[str]) -> tuple[str, list[str], dict[str, str]]:
     headers: list[str] = []
     section_map: dict[str, list[str]] = {"body": []}
     current = "body"
 
     for raw in lines:
-        low = raw.lower().strip()
-        if len(raw) <= 90 and any(k == low or low.startswith(k + " ") for k in SECTION_KEYS):
-            current = "methods" if low.startswith("materials and methods") else low.split()[0]
+        canon = _match_section_heading(raw)
+        if canon is not None:
+            current = canon
             headers.append(raw)
             section_map.setdefault(current, [])
             continue

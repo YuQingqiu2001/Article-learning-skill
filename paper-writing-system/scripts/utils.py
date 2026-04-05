@@ -3,13 +3,14 @@ from __future__ import annotations
 
 import hashlib
 import json
+import platform
 from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any
 
 
-DEFAULT_INPUT_DIR = r"D:\sci文献数据"
+DEFAULT_INPUT_DIR = r"D:\sci文献数据" if platform.system() == "Windows" else str(Path.home() / "sci_papers")
 
 
 @dataclass
@@ -45,9 +46,16 @@ def scan_recent_pdfs(input_dir: Path, days: int) -> list[PDFFile]:
     cutoff = datetime.now(timezone.utc) - timedelta(days=days)
     recent: list[PDFFile] = []
     for pdf in input_dir.rglob("*.pdf"):
-        ts = datetime.fromtimestamp(pdf.stat().st_mtime, tz=timezone.utc)
+        try:
+            ts = datetime.fromtimestamp(pdf.stat().st_mtime, tz=timezone.utc)
+        except OSError:
+            continue
         if ts >= cutoff:
-            recent.append(PDFFile(path=pdf, modified_time=ts, file_hash=file_sha256(pdf)))
+            try:
+                fhash = file_sha256(pdf)
+            except OSError:
+                continue
+            recent.append(PDFFile(path=pdf, modified_time=ts, file_hash=fhash))
     return sorted(recent, key=lambda x: x.modified_time, reverse=True)
 
 
