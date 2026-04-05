@@ -12,6 +12,7 @@
 - 解析结构并抽象写作模式
 - 产出 daily memory 与能力沉淀文件
 - 生成训练样本（Original Article 风格 + Review 风格）
+- 增加“类人学习演化”机制：重复出现模式自动升置信，形成学习状态与次日关注点
 
 ## 目录结构
 ```text
@@ -45,6 +46,8 @@ paper-writing-system/
    ├─ memory/
    └─ skills/
       ├─ generated_examples/
+      ├─ learning_state.json
+      ├─ evolution_log.md
       ├─ abstract_patterns.md
       ├─ results_logic_patterns.md
       ├─ discussion_patterns.md
@@ -83,6 +86,8 @@ python scripts/learn_papers.py --dry-run --verbose
 - `runtime/memory/YYYY-MM-DD.md`：当日学习总结
 - `runtime/skills/*.md`：能力模式沉淀（自动去重）
 - `runtime/skills/generated_examples/YYYY-MM-DD.md`：训练样本
+- `runtime/skills/learning_state.json`：模式暴露次数/加权分/状态（observing/candidate/high_conf）
+- `runtime/skills/evolution_log.md`：每日学习反思（新学到/被强化/仍不确定/下一步关注）
 - `runtime/processed_files.json`：处理状态索引
 
 ## 当前实现边界
@@ -95,3 +100,9 @@ python scripts/learn_papers.py --dry-run --verbose
 2. 接入 LLM 实现段落级 claim-evidence-synthesis 提取
 3. 引入置信度校准与文献质量评分模型
 4. 增加单元测试与回归测试数据集
+
+
+## 逻辑校验（建议每次改动后执行）
+```bash
+python -m unittest discover -s tests -p "test_*.py" -v
+```

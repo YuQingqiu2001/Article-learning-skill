@@ -13,3 +13,5 @@ runtime/processed_files.json
 runtime/memory/*.md
 runtime/skills/generated_examples/*.md
 runtime/**/*.tmp
+runtime/skills/learning_state.json
+runtime/skills/evolution_log.md

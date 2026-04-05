@@ -13,7 +13,8 @@ except ModuleNotFoundError:  # optional until real PDF processing
     PdfReader = None
 
 from knowledge_extractor import extract_knowledge
-from output_writer import append_unique_bullets, write_daily_memory, write_generated_examples
+from learning_engine import PatternCandidate, extract_focus_items, load_learning_state, save_learning_state, update_learning_state
+from output_writer import append_unique_bullets, write_daily_memory, write_evolution_log, write_generated_examples
 from parser_article import parse_article_structure
 from parser_review import parse_review_structure
 from pattern_extractor import (
@@ -55,6 +56,7 @@ def extract_text_and_sections(pdf_path: Path) -> tuple[str, list[str], dict[str,
     """
     if PdfReader is None:
         raise RuntimeError("pypdf is required for PDF text extraction. Install requirements.txt first.")
+
     reader = PdfReader(str(pdf_path))
     text = "\n".join((p.extract_text() or "") for p in reader.pages[:20])
 
@@ -91,6 +93,56 @@ def quality_flag(text: str, section_map: dict[str, str]) -> str:
     if length < 5000 or has_core < 4:
         return "medium"
     return "high"
+
+
+def to_candidates(analysis: dict[str, Any]) -> list[PatternCandidate]:
+    out: list[PatternCandidate] = []
+    source = analysis["file_name"]
+
+    for item in analysis.get("patterns", {}).get("abstract_patterns", []):
+        out.append(
+            PatternCandidate(
+                category="abstract_patterns",
+                text=item["pattern"],
+                source=source,
+                confidence=item["confidence"],
+                paper_type=analysis["paper_type"],
+                quality_flag=analysis["quality_flag"],
+            )
+        )
+    for item in analysis.get("patterns", {}).get("results_logic_patterns", []):
+        out.append(
+            PatternCandidate(
+                category="results_logic_patterns",
+                text=item["pattern"],
+                source=source,
+                confidence=item["confidence"],
+                paper_type=analysis["paper_type"],
+                quality_flag=analysis["quality_flag"],
+            )
+        )
+    for item in analysis.get("patterns", {}).get("review_structure_patterns", []):
+        out.append(
+            PatternCandidate(
+                category="review_structures",
+                text=item["pattern"],
+                source=source,
+                confidence=item["confidence"],
+                paper_type=analysis["paper_type"],
+                quality_flag=analysis["quality_flag"],
+            )
+        )
+    return out
+
+
+
+
+def learning_priority_key(analysis: dict[str, Any]) -> tuple[int, int]:
+    """Higher priority first: review > article, high quality > medium."""
+    type_score = 2 if analysis.get("paper_type") == "review" else 1
+    q = analysis.get("quality_flag")
+    quality_score = 3 if q == "high" else 2 if q == "medium" else 1
+    return type_score, quality_score
 
 
 def main() -> int:
@@ -181,6 +233,7 @@ def main() -> int:
     if not args.dry_run:
         # 仅沉淀高质量且非失败结果
         valid = [a for a in analyses if a["status"] == "ok" and a["quality_flag"] != "low"]
+        valid.sort(key=learning_priority_key, reverse=True)
 
         abs_bullets = []
         res_bullets = []
@@ -188,8 +241,15 @@ def main() -> int:
         rev_bullets = []
         sci_bullets = []
 
+        # Human-like evolution state: repeated exposure boosts confidence.
+        learning_state_path = base_dir / "runtime" / "skills" / "learning_state.json"
+        state = load_learning_state(learning_state_path)
+        daily_candidates: list[PatternCandidate] = []
+
         for a in valid:
             src = a["file_name"]
+            daily_candidates.extend(to_candidates(a))
+
             for item in a["patterns"].get("abstract_patterns", []):
                 abs_bullets.append(f"[{item['confidence']}] {item['pattern']} (source: {src})")
             for item in a["patterns"].get("results_logic_patterns", []):
@@ -208,6 +268,24 @@ def main() -> int:
         append_unique_bullets(base_dir / "runtime" / "skills" / "review_structures.md", "Review Structures", rev_bullets)
         append_unique_bullets(base_dir / "runtime" / "skills" / "scientific_phrases.md", "Scientific Phrases", sci_bullets)
 
+        state = update_learning_state(state, daily_candidates, date_str)
+        save_learning_state(learning_state_path, state)
+
+        focus_items = extract_focus_items(state, top_k=6)
+        recent_updates = state.get("history", [])[-1].get("updates", []) if state.get("history") else []
+        new_items = [u["key"] for u in recent_updates if u.get("count") == 1]
+        reinforced = [u["key"] for u in recent_updates if u.get("status") in {"candidate", "high_conf"}]
+        uncertain = [f"{a['file_name']}::uncertain_knowledge" for a in valid if any(k.get("uncertain") for k in a.get("knowledge", []))]
+
+        write_evolution_log(
+            base_dir / "runtime" / "skills" / "evolution_log.md",
+            date_str,
+            new_items,
+            reinforced,
+            uncertain,
+            focus_items,
+        )
+
         write_generated_examples(base_dir / "runtime" / "skills" / "generated_examples" / f"{date_str}.md", date_str)
 
         processed_records.extend(
@@ -223,7 +301,12 @@ def main() -> int:
             }
             for a in analyses
         )
-        save_json(processed_path, processed_records)
+        # de-duplicate by (file_path, file_hash), keeping latest record
+        unique_map: dict[tuple[str, str], dict[str, Any]] = {}
+        for rec in processed_records:
+            key = (rec.get("file_path", ""), rec.get("file_hash", ""))
+            unique_map[key] = rec
+        save_json(processed_path, list(unique_map.values()))
 
     logging.info("Done. Analyses: %s", len(analyses))
     return 0
