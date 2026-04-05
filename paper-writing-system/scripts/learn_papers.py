@@ -26,7 +26,7 @@ from utils import (
     DEFAULT_INPUT_DIR,
     ensure_runtime_structure,
     load_json,
-    normalize_windows_path,
+    normalize_path,
     save_json,
     scan_recent_pdfs,
     today_str,
@@ -131,6 +131,9 @@ def main() -> int:
     processed_index = {(r.get("file_path"), r.get("file_hash")) for r in processed_records}
 
     input_path = Path(args.input_dir)
+    if not input_path.is_dir():
+        logging.warning("Input directory does not exist or is not a directory: %s", input_path)
+
     pdfs = scan_recent_pdfs(input_path, args.days)
     if args.max_files and args.max_files > 0:
         pdfs = pdfs[: args.max_files]
@@ -143,7 +146,7 @@ def main() -> int:
 
     seen_this_run: set[tuple[str, str]] = set()
     for pdf in pdfs:
-        key = (normalize_windows_path(pdf.path), pdf.file_hash)
+        key = (normalize_path(pdf.path), pdf.file_hash)
         if key in seen_this_run:
             logging.debug("Skip duplicated file in current run: %s", pdf.path)
             continue
@@ -167,7 +170,7 @@ def main() -> int:
 
             analysis = {
                 "file_name": pdf.path.name,
-                "file_path": normalize_windows_path(pdf.path),
+                "file_path": normalize_path(pdf.path),
                 "modified_time": pdf.modified_time.isoformat(),
                 "file_hash": pdf.file_hash,
                 "processed_date": date_str,
@@ -216,7 +219,7 @@ def main() -> int:
             analyses.append(
                 {
                     "file_name": pdf.path.name,
-                    "file_path": normalize_windows_path(pdf.path),
+                    "file_path": normalize_path(pdf.path),
                     "modified_time": pdf.modified_time.isoformat(),
                     "file_hash": pdf.file_hash,
                     "processed_date": date_str,
