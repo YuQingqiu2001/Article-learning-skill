@@ -42,6 +42,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--dry-run", action="store_true", help="Analyze only, skip core skill file writing")
     parser.add_argument("--force", action="store_true", help="Ignore processed index and reprocess files")
     parser.add_argument("--verbose", action="store_true", help="Verbose logging")
+    parser.add_argument("--max-files", type=int, default=0, help="Max number of PDFs to process (0 means no limit)")
     return parser.parse_args()
 
 
@@ -156,14 +157,22 @@ def main() -> int:
     processed_records: list[dict[str, Any]] = load_json(processed_path, default=[])
     processed_index = {(r.get("file_path"), r.get("file_hash")) for r in processed_records}
 
-    pdfs = scan_recent_pdfs(Path(args.input_dir), args.days)
+    input_path = Path(args.input_dir)
+    pdfs = scan_recent_pdfs(input_path, args.days)
+    if args.max_files and args.max_files > 0:
+        pdfs = pdfs[: args.max_files]
     logging.info("Found %s recent PDF(s).", len(pdfs))
 
     analyses: list[dict[str, Any]] = []
     date_str = today_str()
 
+    seen_this_run: set[tuple[str, str]] = set()
     for pdf in pdfs:
         key = (normalize_windows_path(pdf.path), pdf.file_hash)
+        if key in seen_this_run:
+            logging.debug("Skip duplicated file in current run: %s", pdf.path)
+            continue
+        seen_this_run.add(key)
         if not args.force and key in processed_index:
             logging.debug("Skip already processed: %s", pdf.path)
             continue
@@ -224,7 +233,8 @@ def main() -> int:
 
     memory_file = base_dir / "runtime" / "memory" / f"{date_str}.md"
     if not analyses:
-        write_daily_memory(memory_file, date_str, analyses, message="无新增文献")
+        msg = "无新增文献" if input_path.exists() else f"输入目录不存在: {args.input_dir}"
+        write_daily_memory(memory_file, date_str, analyses, message=msg)
         logging.info("No new files to process.")
         return 0
 

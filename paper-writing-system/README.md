@@ -81,6 +81,7 @@ python scripts/learn_papers.py --dry-run --verbose
 - `--dry-run`：仅分析，不写入核心能力沉淀
 - `--force`：忽略 `processed_files.json`，强制重处理
 - `--verbose`：输出详细日志
+- `--max-files`：最多处理多少篇 PDF（默认 `0` 表示不限制）
 
 ## 输出说明
 - `runtime/memory/YYYY-MM-DD.md`：当日学习总结
@@ -89,6 +90,7 @@ python scripts/learn_papers.py --dry-run --verbose
 - `runtime/skills/learning_state.json`：模式暴露次数/加权分/状态（observing/candidate/high_conf）
 - `runtime/skills/evolution_log.md`：每日学习反思（新学到/被强化/仍不确定/下一步关注）
 - `runtime/processed_files.json`：处理状态索引
+- 当输入目录不存在时，当日 memory 会明确记录 `输入目录不存在: <path>`，便于排错
 
 ## 当前实现边界
 - 已实现规则驱动骨架（结构识别、基础分类、占位抽取、Markdown输出）

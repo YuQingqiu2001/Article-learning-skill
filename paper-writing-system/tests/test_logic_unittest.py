@@ -41,6 +41,15 @@ class TestClassifier(unittest.TestCase):
         self.assertEqual(res.paper_type, "article")
 
 
+    def test_uncertain_when_signals_weak(self) -> None:
+        res = classify_paper(
+            file_name="paper_misc.pdf",
+            text="General discussion without clear structure.",
+            section_headers=["Background"],
+        )
+        self.assertEqual(res.paper_type, "uncertain")
+
+
 class TestParsers(unittest.TestCase):
     def test_article_parser_outputs_required_blocks(self) -> None:
         parsed = parse_article_structure(
