@@ -158,3 +158,10 @@ python scripts/learn_papers.py --input-dir "D:\\sci文献数据" --days 1 --verb
 - 若复核分数过低或存在结构/质量风险，标记 `needs_human_guidance`。
 - 被标记文献不得写入核心skills，只能进入 memory 与 human_questions 文件。
 - 必须向人提出最少3个澄清问题（学习重点、文献类型、哪些结论需uncertain）。
+
+
+## 16) Openclaw 集成约定
+- 本 skill 设计为可直接安装到 Openclaw。
+- UI 元数据文件：`agents/openai.yaml`。
+- 推荐入口：`scripts/openclaw_entry.py`（读取 `OPENCLAW_*` 环境变量后调用 `learn_papers.py`）。
+- 入口脚本必须保持“手动触发”语义，不得引入自动定时调度。

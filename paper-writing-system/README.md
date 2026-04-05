@@ -112,3 +112,26 @@ python scripts/learn_papers.py --dry-run --verbose
 ```bash
 python -m unittest discover -s tests -p "test_*.py" -v
 ```
+
+
+## Openclaw 安装与调用
+- 该目录可直接作为 Openclaw skill 安装。
+- Openclaw 元数据文件：`agents/openai.yaml`。
+- Openclaw 入口脚本：`scripts/openclaw_entry.py`（通过环境变量转为 CLI 参数并调用 `learn_papers.py`）。
+
+示例（Windows / PowerShell）：
+```powershell
+$env:OPENCLAW_INPUT_DIR = "D:\sci文献数据"
+$env:OPENCLAW_DAYS = "1"
+$env:OPENCLAW_DRY_RUN = "1"
+python scripts/openclaw_entry.py
+```
+
+支持的环境变量：
+- `OPENCLAW_INPUT_DIR`
+- `OPENCLAW_DAYS`
+- `OPENCLAW_DRY_RUN`
+- `OPENCLAW_FORCE`
+- `OPENCLAW_VERBOSE`
+- `OPENCLAW_MAX_FILES`
+- `OPENCLAW_STOP_ON_BIAS`

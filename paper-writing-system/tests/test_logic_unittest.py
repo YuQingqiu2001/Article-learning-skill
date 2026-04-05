@@ -19,6 +19,7 @@ sys.path.insert(0, str(SCRIPTS_DIR))
 from ai_review_guard import simulate_ai_review
 from learning_engine import PatternCandidate, extract_focus_items, load_learning_state, update_learning_state
 from output_writer import append_unique_bullets, write_human_questions
+from openclaw_entry import build_args_from_env
 from parser_article import parse_article_structure
 from parser_review import parse_review_structure
 from pdf_classifier import classify_paper
@@ -107,6 +108,33 @@ class TestAIReviewGuard(unittest.TestCase):
             text = target.read_text(encoding="utf-8")
             self.assertIn("a.pdf", text)
             self.assertIn("Q1", text)
+
+
+class TestOpenclawEntry(unittest.TestCase):
+    def test_build_args_from_env(self) -> None:
+        import os
+
+        backup = dict(os.environ)
+        try:
+            os.environ["OPENCLAW_INPUT_DIR"] = r"D:\sci文献数据"
+            os.environ["OPENCLAW_DAYS"] = "2"
+            os.environ["OPENCLAW_DRY_RUN"] = "1"
+            os.environ["OPENCLAW_FORCE"] = "1"
+            os.environ["OPENCLAW_VERBOSE"] = "1"
+            os.environ["OPENCLAW_MAX_FILES"] = "3"
+            os.environ["OPENCLAW_STOP_ON_BIAS"] = "1"
+
+            args = build_args_from_env()
+            self.assertIn("--input-dir", args)
+            self.assertIn("--days", args)
+            self.assertIn("--max-files", args)
+            self.assertIn("--dry-run", args)
+            self.assertIn("--force", args)
+            self.assertIn("--verbose", args)
+            self.assertIn("--stop-on-bias", args)
+        finally:
+            os.environ.clear()
+            os.environ.update(backup)
 
 
 class TestLearningAndDedup(unittest.TestCase):
