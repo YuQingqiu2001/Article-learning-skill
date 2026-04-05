@@ -3,21 +3,13 @@ from __future__ import annotations
 
 import hashlib
 import json
-import platform
 from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any
 
 
-def _default_input_dir() -> str:
-    """Return a sensible default input directory based on the platform."""
-    if platform.system() == "Windows":
-        return r"D:\sci文献数据"
-    return str(Path.home() / "sci_papers")
-
-
-DEFAULT_INPUT_DIR = _default_input_dir()
+DEFAULT_INPUT_DIR = r"D:\sci文献数据"
 
 
 @dataclass
@@ -50,22 +42,12 @@ def scan_recent_pdfs(input_dir: Path, days: int) -> list[PDFFile]:
     if not input_dir.exists():
         return []
 
-    if not input_dir.is_dir():
-        return []
-
     cutoff = datetime.now(timezone.utc) - timedelta(days=days)
     recent: list[PDFFile] = []
     for pdf in input_dir.rglob("*.pdf"):
-        try:
-            ts = datetime.fromtimestamp(pdf.stat().st_mtime, tz=timezone.utc)
-        except OSError:
-            continue
+        ts = datetime.fromtimestamp(pdf.stat().st_mtime, tz=timezone.utc)
         if ts >= cutoff:
-            try:
-                fhash = file_sha256(pdf)
-            except OSError:
-                continue
-            recent.append(PDFFile(path=pdf, modified_time=ts, file_hash=fhash))
+            recent.append(PDFFile(path=pdf, modified_time=ts, file_hash=file_sha256(pdf)))
     return sorted(recent, key=lambda x: x.modified_time, reverse=True)
 
 
@@ -87,6 +69,6 @@ def today_str() -> str:
     return datetime.now().strftime("%Y-%m-%d")
 
 
-def normalize_path(path: Path | str) -> str:
-    """Normalize path to the current platform's convention."""
-    return str(Path(path))
+def normalize_windows_path(path: Path | str) -> str:
+    """Normalize output path for Windows-style readability."""
+    return str(Path(path)).replace("/", "\\")

@@ -12,8 +12,7 @@ from pathlib import Path
 
 
 def build_args_from_env() -> list[str]:
-    from utils import DEFAULT_INPUT_DIR
-    input_dir = os.getenv("OPENCLAW_INPUT_DIR", DEFAULT_INPUT_DIR)
+    input_dir = os.getenv("OPENCLAW_INPUT_DIR", r"D:\sci文献数据")
     days = os.getenv("OPENCLAW_DAYS", "1")
     dry_run = os.getenv("OPENCLAW_DRY_RUN", "0") == "1"
     force = os.getenv("OPENCLAW_FORCE", "0") == "1"

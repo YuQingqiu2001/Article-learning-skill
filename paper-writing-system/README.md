@@ -98,6 +98,7 @@ python scripts/learn_papers.py --dry-run --verbose
 - `runtime/skills/evolution_log.md`：每日学习反思（新学到/被强化/仍不确定/下一步关注）
 - `runtime/processed_files.json`：处理状态索引
 - `runtime/memory/human_questions_YYYY-MM-DD.md`：AI复核发现偏差后自动生成的人类澄清问题
+- AI复核采用分级风险门控，减少“轻微问题即全部拦截”的误伤
 - 当输入目录不存在时，当日 memory 会明确记录 `输入目录不存在: <path>`，便于排错
 
 ## 当前实现边界

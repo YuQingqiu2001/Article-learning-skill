@@ -158,6 +158,7 @@ python scripts/learn_papers.py --input-dir "D:\\sci文献数据" --days 1 --verb
 ## 15) AI复核规则（单篇学习后立即执行）
 - 对每篇文献执行 second-pass 复核（当前为规则模拟，后续可接LLM）。
 - 若复核分数过低或存在结构/质量风险，标记 `needs_human_guidance`。
+- 复核采用分级风险门控：critical问题必拦截；非critical问题按分数与问题数量联合判断，避免过度拦截。
 - 被标记文献不得写入核心skills，只能进入 memory 与 human_questions 文件。
 - 必须向人提出最少3个澄清问题（学习重点、文献类型、哪些结论需uncertain）。
 - 支持下一轮通过 `--feedback-file` 注入人工反馈，修正学习方向并决定是否允许沉淀。
