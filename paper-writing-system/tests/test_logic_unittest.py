@@ -21,6 +21,7 @@ from feedback_loop import apply_feedback, load_feedback_map
 from learning_engine import PatternCandidate, extract_focus_items, load_learning_state, update_learning_state
 from output_writer import append_unique_bullets, write_human_questions
 from openclaw_entry import build_args_from_env
+from install_openclaw import resolve_codex_home, install_skill, SKILL_NAME
 from parser_article import parse_article_structure
 from pdf_reader import _sectionize_lines
 from parser_review import parse_review_structure
@@ -197,6 +198,28 @@ class TestFeedbackLoop(unittest.TestCase):
             self.assertEqual(updated["paper_type"], "review")
             self.assertEqual(updated["status"], "ok")
             self.assertEqual(updated["learn_focus"], "mechanism")
+
+
+class TestInstaller(unittest.TestCase):
+    def test_resolve_codex_home_default_or_env(self) -> None:
+        import os
+
+        backup = os.environ.get("CODEX_HOME")
+        try:
+            os.environ["CODEX_HOME"] = "./tmp_codex_home_test"
+            resolved = resolve_codex_home("")
+            self.assertTrue(str(resolved).endswith("tmp_codex_home_test"))
+        finally:
+            if backup is None:
+                os.environ.pop("CODEX_HOME", None)
+            else:
+                os.environ["CODEX_HOME"] = backup
+
+    def test_install_skill_dry_target(self) -> None:
+        with tempfile.TemporaryDirectory() as td:
+            target = install_skill(Path(td), force=False)
+            self.assertTrue(target.exists())
+            self.assertEqual(target.name, SKILL_NAME)
 
 
 class TestLearningAndDedup(unittest.TestCase):

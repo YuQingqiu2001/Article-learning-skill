@@ -119,6 +119,31 @@ python -m unittest discover -s tests -p "test_*.py" -v
 ```
 
 
+
+
+## Windows 一键安装到 Openclaw
+在 `paper-writing-system/` 目录下执行：
+
+### PowerShell（推荐）
+```powershell
+.\install_openclaw_windows.ps1 -DryRun
+.\install_openclaw_windows.ps1 -Force
+```
+
+### CMD
+```bat
+install_openclaw_windows.bat --dry-run
+install_openclaw_windows.bat --force
+```
+
+### 说明
+- 默认安装到 `%USERPROFILE%\.codex\skills\paper-writing-system`。
+- 若设置了 `CODEX_HOME`，会优先安装到 `%CODEX_HOME%\skills\paper-writing-system`。
+- 也可手动指定：
+```powershell
+.\install_openclaw_windows.ps1 -CodexHome "D:\OpenclawHome" -Force
+```
+
 ## Openclaw 安装与调用
 - 该目录可直接作为 Openclaw skill 安装。
 - Openclaw 元数据文件：`agents/openai.yaml`。
