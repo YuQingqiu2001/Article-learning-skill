@@ -49,9 +49,9 @@ def apply_feedback(analysis: dict[str, Any], feedback: dict[str, Any]) -> dict[s
     if isinstance(learn_focus, str) and learn_focus.strip():
         updated["learn_focus"] = learn_focus.strip()
 
-    if feedback.get("allow_deposit") is True and updated.get("status") == "needs_human_guidance":
+    if feedback.get("allow_deposit") is True and updated.get("status") != "ok":
+        notes.append(f"allow_deposit_by_human:prev_status={updated['status']}")
         updated["status"] = "ok"
-        notes.append("allow_deposit_by_human")
 
     extra = feedback.get("notes")
     if isinstance(extra, str) and extra.strip():

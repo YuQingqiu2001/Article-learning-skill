@@ -6,6 +6,7 @@ Priority:
 """
 from __future__ import annotations
 
+import re
 from pathlib import Path
 from typing import Any
 
@@ -20,7 +21,43 @@ except ModuleNotFoundError:  # pragma: no cover
     PdfReader = None
 
 
-SECTION_KEYS = ["abstract", "introduction", "methods", "materials and methods", "results", "discussion", "conclusion"]
+# Canonical section names and their common variations.
+SECTION_ALIASES: dict[str, list[str]] = {
+    "abstract": ["abstract", "summary"],
+    "introduction": ["introduction", "background"],
+    "methods": [
+        "methods",
+        "materials and methods",
+        "materials & methods",
+        "experimental methods",
+        "experimental section",
+        "experimental procedures",
+        "study design",
+        "methodology",
+        "patients and methods",
+    ],
+    "results": ["results", "findings"],
+    "discussion": ["discussion"],
+    "conclusion": [
+        "conclusion",
+        "conclusions",
+        "concluding remarks",
+        "summary and conclusions",
+    ],
+}
+
+# Pre-compiled regex: match any known alias as a full heading line.
+_ALIAS_PATTERNS: list[tuple[str, re.Pattern[str]]] = []
+for _canon, _aliases in SECTION_ALIASES.items():
+    for _alias in _aliases:
+        # Match the alias optionally followed by a section number or colon,
+        # e.g. "1. Introduction", "Methods:", "3 Results"
+        _ALIAS_PATTERNS.append(
+            (_canon, re.compile(rf"^(?:\d+[\.\)]\s*)?{re.escape(_alias)}[\s:]*$", re.IGNORECASE))
+        )
+
+# Max line length for a heading candidate.
+_MAX_HEADING_LEN = 100
 
 
 def extract_pdf_content(pdf_path: Path, max_pages: int = 30) -> tuple[str, list[str], dict[str, str], dict[str, Any]]:
@@ -66,15 +103,26 @@ def _extract_with_pypdf(pdf_path: Path, max_pages: int = 30) -> tuple[str, list[
     return _sectionize_lines(lines)
 
 
+def _match_section_heading(line: str) -> str | None:
+    """Return the canonical section name if *line* looks like a section heading, else None."""
+    if len(line) > _MAX_HEADING_LEN:
+        return None
+    stripped = line.strip()
+    for canon, pat in _ALIAS_PATTERNS:
+        if pat.match(stripped):
+            return canon
+    return None
+
+
 def _sectionize_lines(lines: list[str]) -> tuple[str, list[str], dict[str, str]]:
     headers: list[str] = []
     section_map: dict[str, list[str]] = {"body": []}
     current = "body"
 
     for raw in lines:
-        low = raw.lower().strip()
-        if len(raw) <= 90 and any(k == low or low.startswith(k + " ") for k in SECTION_KEYS):
-            current = "methods" if low.startswith("materials and methods") else low.split()[0]
+        canon = _match_section_heading(raw)
+        if canon is not None:
+            current = canon
             headers.append(raw)
             section_map.setdefault(current, [])
             continue
