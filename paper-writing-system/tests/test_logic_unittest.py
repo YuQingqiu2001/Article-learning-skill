@@ -21,7 +21,7 @@ from feedback_loop import apply_feedback, load_feedback_map
 from learning_engine import PatternCandidate, extract_focus_items, load_learning_state, update_learning_state
 from output_writer import append_unique_bullets, write_human_questions
 from openclaw_entry import build_args_from_env
-from install_openclaw import resolve_codex_home, install_skill, SKILL_NAME
+from install_openclaw import resolve_codex_home, install_skill, validate_install, SKILL_NAME
 from parser_article import parse_article_structure
 from pdf_reader import _sectionize_lines
 from parser_review import parse_review_structure
@@ -233,6 +233,9 @@ class TestInstaller(unittest.TestCase):
             target = install_skill(Path(td), force=False)
             self.assertTrue(target.exists())
             self.assertEqual(target.name, SKILL_NAME)
+            ok, missing = validate_install(target)
+            self.assertTrue(ok)
+            self.assertEqual(missing, [])
 
 
 class TestLearningAndDedup(unittest.TestCase):

@@ -169,4 +169,5 @@ python scripts/learn_papers.py --input-dir "D:\\sci文献数据" --days 1 --verb
 - UI 元数据文件：`agents/openai.yaml`。
 - 推荐入口：`scripts/openclaw_entry.py`（读取 `OPENCLAW_*` 环境变量后调用 `learn_papers.py`）。
 - Windows 安装脚本：`install_openclaw_windows.ps1` / `install_openclaw_windows.bat`（底层调用 `scripts/install_openclaw.py`）。
+- 安装脚本支持 `--with-venv` 自动配置安装目录依赖环境。
 - 入口脚本必须保持“手动触发”语义，不得引入自动定时调度。

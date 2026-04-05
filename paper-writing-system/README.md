@@ -129,16 +129,20 @@ python -m unittest discover -s tests -p "test_*.py" -v
 ```powershell
 .\install_openclaw_windows.ps1 -DryRun
 .\install_openclaw_windows.ps1 -Force
+.\install_openclaw_windows.ps1 -Force -WithVenv
 ```
 
 ### CMD
 ```bat
 install_openclaw_windows.bat --dry-run
 install_openclaw_windows.bat --force
+install_openclaw_windows.bat --force --with-venv
 ```
 
 ### 说明
 - 默认安装到 `%USERPROFILE%\.codex\skills\paper-writing-system`。
+- 安装器会自动校验关键文件完整性；失败会给出缺失文件列表。
+- 传入 `--with-venv` 可在安装目录自动创建 `.venv` 并安装依赖。
 - 若设置了 `CODEX_HOME`，会优先安装到 `%CODEX_HOME%\skills\paper-writing-system`。
 - 也可手动指定：
 ```powershell

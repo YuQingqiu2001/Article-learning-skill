@@ -1,7 +1,8 @@
 param(
   [string]$CodexHome = "",
   [switch]$Force,
-  [switch]$DryRun
+  [switch]$DryRun,
+  [switch]$WithVenv
 )
 
 $scriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
@@ -11,5 +12,6 @@ $argsList = @($installer)
 if ($CodexHome -ne "") { $argsList += @("--codex-home", $CodexHome) }
 if ($Force) { $argsList += "--force" }
 if ($DryRun) { $argsList += "--dry-run" }
+if ($WithVenv) { $argsList += "--with-venv" }
 
 python @argsList
