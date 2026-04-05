@@ -1,0 +1,6 @@
+version: 1
+interface:
+  display_name: Paper Writing System
+  short_description: 单篇文献学习、AI复核与SCI写作能力沉淀
+  default_prompt: |
+    请使用 paper-writing-system skill 对最近新增 PDF 进行单篇学习，并输出当日memory、skills沉淀与human_questions。

@@ -1,0 +1,14 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "PaperAnalysis",
+  "type": "object",
+  "properties": {
+    "file_name": {"type": "string"},
+    "paper_type": {"type": "string"},
+    "quality_flag": {"type": "string"},
+    "sections": {"type": "object"},
+    "patterns": {"type": "object"},
+    "knowledge": {"type": "array"}
+  },
+  "required": ["file_name", "paper_type", "quality_flag"]
+}
