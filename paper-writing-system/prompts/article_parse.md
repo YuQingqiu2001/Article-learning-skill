@@ -9,6 +9,7 @@
 - abstract_roles: Background/Objective/Methods/Results/Conclusion
 - findings: question/method/result/reasoning/transition
 - discussion_logic: result -> mechanism -> literature -> inference
+- reasoning_chain: evidence_signal -> inference_strength -> transition_type
 
 ## 约束
 - 先保守抽取，再增强。

@@ -60,6 +60,7 @@ description: 手动触发的科研论文学习与SCI写作能力沉淀skill。�
   - `result`
   - `reasoning`
   - `transition`
+- `reasoning` 必须尽量体现“证据信号 -> 推断语句”。
 - 明确 Result1 → Result2 → Result3 推进链。
 
 ### 5.4 Discussion 推理模式

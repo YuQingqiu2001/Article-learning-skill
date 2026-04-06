@@ -63,21 +63,28 @@ class TestParsers(unittest.TestCase):
                 "abstract": "A. B. C. D. E.",
                 "introduction": "intro",
                 "methods": "methods",
-                "results": "We found one. We found two.",
-                "discussion": "This suggests mechanism and clinical impact.",
+                "results": "We observed a significant increase (p < 0.05). Furthermore, this suggests improved response.",
+                "discussion": "This result suggests a mechanism and is consistent with previous study.",
             },
         )
         self.assertIn("abstract_roles", parsed)
         self.assertIn("results_finding_units", parsed)
         self.assertIn("discussion_modes", parsed)
+        self.assertIn("Evidence:", parsed["results_finding_units"][0]["reasoning"])
+        self.assertIn("reasoning_chain", parsed["discussion_modes"])
 
     def test_review_parser_outputs_organization(self) -> None:
         parsed = parse_review_structure(
             text="Mechanism and pathway based synthesis.",
-            section_map={"introduction": "intro", "conclusion": "future directions"},
+            section_map={
+                "introduction": "This review suggests a pathway-level model. Evidence from recent studies demonstrated repeatability.",
+                "conclusion": "In summary, these data support an integrated framework for future work.",
+            },
             headers=["Mechanism section"],
         )
         self.assertIn(parsed["organization_type"], {"mechanism-based", "disease-based", "method-based", "timeline-based", "mixed"})
+        self.assertTrue(parsed["claim_evidence_synthesis"][0]["claim"])
+        self.assertTrue(parsed["claim_evidence_synthesis"][0]["evidence"])
 
 
 class TestPDFReader(unittest.TestCase):
