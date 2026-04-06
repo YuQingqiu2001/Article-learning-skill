@@ -12,15 +12,15 @@ from pathlib import Path
 
 
 def build_args_from_env() -> list[str]:
-    input_dir = os.getenv("OPENCLAW_INPUT_DIR", r"D:\sci文献数据")
-    days = os.getenv("OPENCLAW_DAYS", "1")
-    dry_run = os.getenv("OPENCLAW_DRY_RUN", "0") == "1"
-    force = os.getenv("OPENCLAW_FORCE", "0") == "1"
-    verbose = os.getenv("OPENCLAW_VERBOSE", "1") == "1"
-    max_files = os.getenv("OPENCLAW_MAX_FILES", "0")
-    stop_on_bias = os.getenv("OPENCLAW_STOP_ON_BIAS", "0") == "1"
-    feedback_file = os.getenv("OPENCLAW_FEEDBACK_FILE", "")
-    max_pages = os.getenv("OPENCLAW_MAX_PAGES", "30")
+    input_dir = os.getenv("CLAWHUB_INPUT_DIR", os.getenv("OPENCLAW_INPUT_DIR", r"D:\sci文献数据"))
+    days = os.getenv("CLAWHUB_DAYS", os.getenv("OPENCLAW_DAYS", "1"))
+    dry_run = os.getenv("CLAWHUB_DRY_RUN", os.getenv("OPENCLAW_DRY_RUN", "0")) == "1"
+    force = os.getenv("CLAWHUB_FORCE", os.getenv("OPENCLAW_FORCE", "0")) == "1"
+    verbose = os.getenv("CLAWHUB_VERBOSE", os.getenv("OPENCLAW_VERBOSE", "1")) == "1"
+    max_files = os.getenv("CLAWHUB_MAX_FILES", os.getenv("OPENCLAW_MAX_FILES", "0"))
+    stop_on_bias = os.getenv("CLAWHUB_STOP_ON_BIAS", os.getenv("OPENCLAW_STOP_ON_BIAS", "0")) == "1"
+    feedback_file = os.getenv("CLAWHUB_FEEDBACK_FILE", os.getenv("OPENCLAW_FEEDBACK_FILE", ""))
+    max_pages = os.getenv("CLAWHUB_MAX_PAGES", os.getenv("OPENCLAW_MAX_PAGES", "30"))
 
     args = [
         "--input-dir",

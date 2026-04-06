@@ -23,7 +23,7 @@ class PatternCandidate:
 
 def _default_state() -> dict[str, Any]:
     return {
-        "version": "0.1",
+        "version": "0.2",
         "patterns": {},
         "history": [],
     }
