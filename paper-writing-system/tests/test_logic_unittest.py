@@ -171,6 +171,7 @@ class TestOpenclawEntry(unittest.TestCase):
             os.environ["CLAWHUB_STOP_ON_BIAS"] = "1"
             os.environ["CLAWHUB_FEEDBACK_FILE"] = "feedback.json"
             os.environ["CLAWHUB_MAX_PAGES"] = "25"
+            os.environ["CLAWHUB_MANUAL_TRIGGER"] = "1"
 
             args = build_args_from_env()
             self.assertIn("--input-dir", args)
@@ -183,6 +184,19 @@ class TestOpenclawEntry(unittest.TestCase):
             self.assertIn("--verbose", args)
             self.assertIn("--stop-on-bias", args)
             self.assertIn("--feedback-file", args)
+            self.assertIn("--manual-trigger", args)
+        finally:
+            os.environ.clear()
+            os.environ.update(backup)
+
+    def test_build_args_from_env_manual_trigger_off(self) -> None:
+        import os
+
+        backup = dict(os.environ)
+        try:
+            os.environ["CLAWHUB_MANUAL_TRIGGER"] = "0"
+            args = build_args_from_env()
+            self.assertNotIn("--manual-trigger", args)
         finally:
             os.environ.clear()
             os.environ.update(backup)

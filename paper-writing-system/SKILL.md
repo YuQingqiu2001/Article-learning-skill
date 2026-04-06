@@ -128,10 +128,11 @@ description: 手动触发的科研论文学习与SCI写作能力沉淀skill。�
 
 ## 11) 手动调用建议
 ```bash
-python scripts/learn_papers.py --input-dir "D:\\sci文献数据" --days 1 --verbose
+python scripts/learn_papers.py --manual-trigger --input-dir "D:\\sci文献数据" --days 1 --verbose
 ```
 - 首次建议 `--dry-run` 先检查输出。
 - 需要重跑历史文件时使用 `--force`。
+- 未传 `--manual-trigger` 时流程会拒绝执行（防止误设为自动定时任务）。
 
 ## 12) 目录约定
 - `scripts/`: 可执行流程与解析模块
@@ -169,7 +170,7 @@ python scripts/learn_papers.py --input-dir "D:\\sci文献数据" --days 1 --verb
 ## 16) ClawHub / Openclaw 集成约定
 - 本 skill 设计为可直接安装到 ClawHub / Openclaw。
 - UI 元数据文件：`agents/openai.yaml`。
-- 推荐入口：`scripts/openclaw_entry.py`（优先读取 `CLAWHUB_*`，兼容 `OPENCLAW_*` 环境变量后调用 `learn_papers.py`）。
+- 推荐入口：`scripts/openclaw_entry.py`（优先读取 `CLAWHUB_*`，兼容 `OPENCLAW_*` 环境变量，并默认传递手动触发标记后调用 `learn_papers.py`）。
 - Windows 安装脚本：`install_clawhub_windows.ps1` / `install_clawhub_windows.bat`（底层调用 `scripts/install_openclaw.py`）。
 - 安装脚本支持 `--with-venv` 自动配置安装目录依赖环境。
 - 入口脚本必须保持“手动触发”语义，不得引入自动定时调度。

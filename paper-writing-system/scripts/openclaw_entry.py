@@ -21,6 +21,7 @@ def build_args_from_env() -> list[str]:
     stop_on_bias = os.getenv("CLAWHUB_STOP_ON_BIAS", os.getenv("OPENCLAW_STOP_ON_BIAS", "0")) == "1"
     feedback_file = os.getenv("CLAWHUB_FEEDBACK_FILE", os.getenv("OPENCLAW_FEEDBACK_FILE", ""))
     max_pages = os.getenv("CLAWHUB_MAX_PAGES", os.getenv("OPENCLAW_MAX_PAGES", "30"))
+    manual_trigger = os.getenv("CLAWHUB_MANUAL_TRIGGER", os.getenv("OPENCLAW_MANUAL_TRIGGER", "1")) == "1"
 
     args = [
         "--input-dir",
@@ -42,6 +43,8 @@ def build_args_from_env() -> list[str]:
         args.append("--stop-on-bias")
     if feedback_file:
         args.extend(["--feedback-file", feedback_file])
+    if manual_trigger:
+        args.append("--manual-trigger")
     return args
 
 

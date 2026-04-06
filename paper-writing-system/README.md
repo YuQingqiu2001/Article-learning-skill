@@ -72,12 +72,12 @@ pip install -r requirements.txt
 ## 手动运行方式
 ```bash
 cd paper-writing-system
-python scripts/learn_papers.py --input-dir "D:\sci文献数据" --days 1 --verbose
+python scripts/learn_papers.py --manual-trigger --input-dir "D:\sci文献数据" --days 1 --verbose
 ```
 
 推荐首次运行：
 ```bash
-python scripts/learn_papers.py --dry-run --verbose
+python scripts/learn_papers.py --manual-trigger --dry-run --verbose
 ```
 
 ## 参数说明
@@ -90,6 +90,7 @@ python scripts/learn_papers.py --dry-run --verbose
 - `--stop-on-bias`：任一文献被AI复核判定有偏差时立刻停止
 - `--feedback-file`：人工反馈JSON文件，用于修正类型判断/学习重点/是否允许沉淀
 - `--max-pages`：每篇最多读取页数（默认 `30`）
+- `--manual-trigger`：手动触发确认开关（不传则流程拒绝执行）
 
 ## 输出说明
 - `runtime/memory/YYYY-MM-DD.md`：当日学习总结
@@ -160,6 +161,7 @@ install_clawhub_windows.bat --force --with-venv
 $env:CLAWHUB_INPUT_DIR = "D:\sci文献数据"
 $env:CLAWHUB_DAYS = "1"
 $env:CLAWHUB_DRY_RUN = "1"
+$env:CLAWHUB_MANUAL_TRIGGER = "1"
 python scripts/openclaw_entry.py
 ```
 
@@ -173,6 +175,7 @@ python scripts/openclaw_entry.py
 - `CLAWHUB_MAX_PAGES` / `OPENCLAW_MAX_PAGES`
 - `CLAWHUB_STOP_ON_BIAS` / `OPENCLAW_STOP_ON_BIAS`
 - `CLAWHUB_FEEDBACK_FILE` / `OPENCLAW_FEEDBACK_FILE`
+- `CLAWHUB_MANUAL_TRIGGER` / `OPENCLAW_MANUAL_TRIGGER`（默认 `1`）
 
 
 ### 反馈文件格式（JSON）
