@@ -16,14 +16,25 @@ def abstract_patterns(analysis: dict[str, Any]) -> list[dict[str, str]]:
 def results_logic_patterns(analysis: dict[str, Any]) -> list[dict[str, str]]:
     if analysis.get("paper_type") != "article":
         return []
-    return [{"pattern": "Question -> Method -> Result -> Reasoning -> Transition", "confidence": "high"}]
+    findings = analysis.get("parsed", {}).get("results_finding_units", [])
+    reasoning_rich = any("Evidence:" in str(f.get("reasoning", "")) for f in findings)
+    base = {"pattern": "Question -> Method -> Result -> Reasoning -> Transition", "confidence": "high"}
+    if reasoning_rich:
+        return [
+            base,
+            {"pattern": "Evidence signal -> Inference statement -> Next experiment transition", "confidence": "medium"},
+        ]
+    return [base]
 
 
 def review_structure_patterns(analysis: dict[str, Any]) -> list[dict[str, str]]:
     if analysis.get("paper_type") != "review":
         return []
     org = analysis.get("parsed", {}).get("organization_type", "mixed")
-    return [{"pattern": f"{org}: Claim -> Evidence -> Synthesis", "confidence": "medium"}]
+    return [
+        {"pattern": f"{org}: Claim -> Evidence -> Synthesis", "confidence": "medium"},
+        {"pattern": f"{org}: Claim -> Counterpoint -> Integration -> Perspective", "confidence": "medium"},
+    ]
 
 
 def scientific_phrases(analysis: dict[str, Any]) -> list[dict[str, str]]:

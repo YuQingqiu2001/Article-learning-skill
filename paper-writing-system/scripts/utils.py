@@ -1,4 +1,4 @@
-"""Utility helpers for paper-writing-system v0.1 skeleton."""
+"""Utility helpers for paper-writing-system v0.2."""
 from __future__ import annotations
 
 import hashlib

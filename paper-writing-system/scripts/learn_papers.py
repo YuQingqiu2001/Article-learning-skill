@@ -1,4 +1,4 @@
-"""Manual entrypoint for paper-writing-system v0.1 skeleton."""
+"""Manual entrypoint for paper-writing-system v0.2."""
 from __future__ import annotations
 
 import argparse
@@ -35,6 +35,11 @@ from utils import (
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Learn recent papers and extract writing skills.")
+    parser.add_argument(
+        "--manual-trigger",
+        action="store_true",
+        help="Explicitly confirm this run is manually triggered (required to execute pipeline)",
+    )
     parser.add_argument("--input-dir", default=DEFAULT_INPUT_DIR, help="Input PDF directory")
     parser.add_argument("--days", type=int, default=1, help="Recent days window")
     parser.add_argument("--dry-run", action="store_true", help="Analyze only, skip core skill file writing")
@@ -122,6 +127,9 @@ def learning_priority_key(analysis: dict[str, Any]) -> tuple[int, int]:
 def main() -> int:
     args = parse_args()
     configure_logging(args.verbose)
+    if not args.manual_trigger:
+        logging.error("Run blocked: this pipeline only supports manual invocation. Please add --manual-trigger.")
+        return 2
 
     base_dir = Path(__file__).resolve().parents[1]
     ensure_runtime_structure(base_dir)

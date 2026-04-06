@@ -63,21 +63,28 @@ class TestParsers(unittest.TestCase):
                 "abstract": "A. B. C. D. E.",
                 "introduction": "intro",
                 "methods": "methods",
-                "results": "We found one. We found two.",
-                "discussion": "This suggests mechanism and clinical impact.",
+                "results": "We observed a significant increase (p < 0.05). Furthermore, this suggests improved response.",
+                "discussion": "This result suggests a mechanism and is consistent with previous study.",
             },
         )
         self.assertIn("abstract_roles", parsed)
         self.assertIn("results_finding_units", parsed)
         self.assertIn("discussion_modes", parsed)
+        self.assertIn("Evidence:", parsed["results_finding_units"][0]["reasoning"])
+        self.assertIn("reasoning_chain", parsed["discussion_modes"])
 
     def test_review_parser_outputs_organization(self) -> None:
         parsed = parse_review_structure(
             text="Mechanism and pathway based synthesis.",
-            section_map={"introduction": "intro", "conclusion": "future directions"},
+            section_map={
+                "introduction": "This review suggests a pathway-level model. Evidence from recent studies demonstrated repeatability.",
+                "conclusion": "In summary, these data support an integrated framework for future work.",
+            },
             headers=["Mechanism section"],
         )
         self.assertIn(parsed["organization_type"], {"mechanism-based", "disease-based", "method-based", "timeline-based", "mixed"})
+        self.assertTrue(parsed["claim_evidence_synthesis"][0]["claim"])
+        self.assertTrue(parsed["claim_evidence_synthesis"][0]["evidence"])
 
 
 class TestPDFReader(unittest.TestCase):
@@ -149,23 +156,26 @@ class TestAIReviewGuard(unittest.TestCase):
 
 
 class TestOpenclawEntry(unittest.TestCase):
-    def test_build_args_from_env(self) -> None:
+    def test_build_args_from_env_prefers_clawhub(self) -> None:
         import os
 
         backup = dict(os.environ)
         try:
-            os.environ["OPENCLAW_INPUT_DIR"] = r"D:\sci文献数据"
-            os.environ["OPENCLAW_DAYS"] = "2"
-            os.environ["OPENCLAW_DRY_RUN"] = "1"
-            os.environ["OPENCLAW_FORCE"] = "1"
-            os.environ["OPENCLAW_VERBOSE"] = "1"
-            os.environ["OPENCLAW_MAX_FILES"] = "3"
-            os.environ["OPENCLAW_STOP_ON_BIAS"] = "1"
-            os.environ["OPENCLAW_FEEDBACK_FILE"] = "feedback.json"
-            os.environ["OPENCLAW_MAX_PAGES"] = "25"
+            os.environ["OPENCLAW_INPUT_DIR"] = r"D:\legacy"
+            os.environ["CLAWHUB_INPUT_DIR"] = r"D:\sci文献数据"
+            os.environ["CLAWHUB_DAYS"] = "2"
+            os.environ["CLAWHUB_DRY_RUN"] = "1"
+            os.environ["CLAWHUB_FORCE"] = "1"
+            os.environ["CLAWHUB_VERBOSE"] = "1"
+            os.environ["CLAWHUB_MAX_FILES"] = "3"
+            os.environ["CLAWHUB_STOP_ON_BIAS"] = "1"
+            os.environ["CLAWHUB_FEEDBACK_FILE"] = "feedback.json"
+            os.environ["CLAWHUB_MAX_PAGES"] = "25"
+            os.environ["CLAWHUB_MANUAL_TRIGGER"] = "1"
 
             args = build_args_from_env()
             self.assertIn("--input-dir", args)
+            self.assertIn(r"D:\sci文献数据", args)
             self.assertIn("--days", args)
             self.assertIn("--max-files", args)
             self.assertIn("--max-pages", args)
@@ -174,6 +184,19 @@ class TestOpenclawEntry(unittest.TestCase):
             self.assertIn("--verbose", args)
             self.assertIn("--stop-on-bias", args)
             self.assertIn("--feedback-file", args)
+            self.assertIn("--manual-trigger", args)
+        finally:
+            os.environ.clear()
+            os.environ.update(backup)
+
+    def test_build_args_from_env_manual_trigger_off(self) -> None:
+        import os
+
+        backup = dict(os.environ)
+        try:
+            os.environ["CLAWHUB_MANUAL_TRIGGER"] = "0"
+            args = build_args_from_env()
+            self.assertNotIn("--manual-trigger", args)
         finally:
             os.environ.clear()
             os.environ.update(backup)
@@ -218,15 +241,21 @@ class TestInstaller(unittest.TestCase):
         import os
 
         backup = os.environ.get("CODEX_HOME")
+        backup_clawhub = os.environ.get("CLAWHUB_HOME")
         try:
+            os.environ["CLAWHUB_HOME"] = "./tmp_clawhub_home_test"
             os.environ["CODEX_HOME"] = "./tmp_codex_home_test"
             resolved = resolve_codex_home("")
-            self.assertTrue(str(resolved).endswith("tmp_codex_home_test"))
+            self.assertTrue(str(resolved).endswith("tmp_clawhub_home_test"))
         finally:
             if backup is None:
                 os.environ.pop("CODEX_HOME", None)
             else:
                 os.environ["CODEX_HOME"] = backup
+            if backup_clawhub is None:
+                os.environ.pop("CLAWHUB_HOME", None)
+            else:
+                os.environ["CLAWHUB_HOME"] = backup_clawhub
 
     def test_install_skill_dry_target(self) -> None:
         with tempfile.TemporaryDirectory() as td:

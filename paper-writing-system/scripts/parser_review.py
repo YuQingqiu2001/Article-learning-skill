@@ -1,6 +1,7 @@
 """Parser for Review papers."""
 from __future__ import annotations
 
+import re
 from typing import Any
 
 
@@ -42,12 +43,24 @@ def detect_organization_type(text: str, headers: list[str]) -> str:
 
 
 def build_ces_placeholders(section_map: dict[str, str]) -> list[dict[str, str]]:
-    intro = section_map.get("introduction", "")[:300]
-    concl = section_map.get("conclusion", "")[:300]
+    intro = section_map.get("introduction", "")
+    concl = section_map.get("conclusion", "")
+    claim = _pick_sentence(intro, ["we propose", "we suggest", "this review", "we argue"])
+    evidence = _pick_sentence(intro + "\n" + concl, ["evidence", "study", "reported", "demonstrated", "meta-analysis"])
+    synthesis = _pick_sentence(concl, ["therefore", "overall", "in summary", "together", "future"])
     return [
         {
-            "claim": "Core thematic claim placeholder",
-            "evidence": intro,
-            "synthesis": concl,
+            "claim": claim or "Core thematic claim placeholder",
+            "evidence": evidence or (intro[:300] if intro else "Evidence placeholder"),
+            "synthesis": synthesis or (concl[:300] if concl else "Synthesis placeholder"),
         }
     ]
+
+
+def _pick_sentence(text: str, keywords: list[str]) -> str:
+    sentences = [s.strip() for s in re.split(r"(?<=[.!?])\s+", text) if s.strip()]
+    for sent in sentences:
+        low = sent.lower()
+        if any(k in low for k in keywords):
+            return sent[:260]
+    return ""

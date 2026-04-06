@@ -1,8 +1,8 @@
-# paper-writing-system (v0.1 skeleton)
+# paper-writing-system (v0.2)
 
 一个可安装、可扩展、可手动调用的科研论文学习 skill。目标不是“批量PDF处理”，而是把文献中的**SCI写作结构、推理链和知识模式**沉淀为可复用能力。
 
-> 当前版本：**v0.1 skeleton**（已可手动运行，便于后续扩展）
+> 当前版本：**v0.2**（已可手动运行，便于后续扩展）
 
 ## 功能说明
 - 扫描目录中的 PDF（默认 `D:\sci文献数据`）
@@ -11,6 +11,7 @@
 - 基于规则识别文献类型（Article / Review / Uncertain）
 - 一篇一篇学习（单篇处理后再进入下一篇）
 - 解析结构并抽象写作模式
+- 强化文献推理逻辑抽象（证据信号 -> 推断 -> 过渡）
 - 每篇学习后执行 AI 偏差复核；若存在偏差，生成人工问题清单
 - 产出 daily memory 与能力沉淀文件
 - 生成训练样本（Original Article 风格 + Review 风格）
@@ -71,12 +72,12 @@ pip install -r requirements.txt
 ## 手动运行方式
 ```bash
 cd paper-writing-system
-python scripts/learn_papers.py --input-dir "D:\sci文献数据" --days 1 --verbose
+python scripts/learn_papers.py --manual-trigger --input-dir "D:\sci文献数据" --days 1 --verbose
 ```
 
 推荐首次运行：
 ```bash
-python scripts/learn_papers.py --dry-run --verbose
+python scripts/learn_papers.py --manual-trigger --dry-run --verbose
 ```
 
 ## 参数说明
@@ -89,6 +90,7 @@ python scripts/learn_papers.py --dry-run --verbose
 - `--stop-on-bias`：任一文献被AI复核判定有偏差时立刻停止
 - `--feedback-file`：人工反馈JSON文件，用于修正类型判断/学习重点/是否允许沉淀
 - `--max-pages`：每篇最多读取页数（默认 `30`）
+- `--manual-trigger`：手动触发确认开关（不传则流程拒绝执行）
 
 ## 输出说明
 - `runtime/memory/YYYY-MM-DD.md`：当日学习总结
@@ -122,56 +124,58 @@ python -m unittest discover -s tests -p "test_*.py" -v
 
 
 
-## Windows 一键安装到 Openclaw
+## Windows 一键安装到 ClawHub（兼容 Openclaw）
 在 `paper-writing-system/` 目录下执行：
 
 ### PowerShell（推荐）
 ```powershell
-.\install_openclaw_windows.ps1 -DryRun
-.\install_openclaw_windows.ps1 -Force
-.\install_openclaw_windows.ps1 -Force -WithVenv
+.\install_clawhub_windows.ps1 -DryRun
+.\install_clawhub_windows.ps1 -Force
+.\install_clawhub_windows.ps1 -Force -WithVenv
 ```
 
 ### CMD
 ```bat
-install_openclaw_windows.bat --dry-run
-install_openclaw_windows.bat --force
-install_openclaw_windows.bat --force --with-venv
+install_clawhub_windows.bat --dry-run
+install_clawhub_windows.bat --force
+install_clawhub_windows.bat --force --with-venv
 ```
 
 ### 说明
-- 默认安装到 `%USERPROFILE%\.codex\skills\paper-writing-system`。
+- 默认安装到 `%USERPROFILE%\.clawhub\skills\paper-writing-system`。
 - 安装器会自动校验关键文件完整性；失败会给出缺失文件列表。
 - 传入 `--with-venv` 可在安装目录自动创建 `.venv` 并安装依赖。
-- 若设置了 `CODEX_HOME`，会优先安装到 `%CODEX_HOME%\skills\paper-writing-system`。
+- 若设置了 `CLAWHUB_HOME`，会优先安装到 `%CLAWHUB_HOME%\skills\paper-writing-system`（其次兼容 `CODEX_HOME`）。
 - 也可手动指定：
 ```powershell
-.\install_openclaw_windows.ps1 -CodexHome "D:\OpenclawHome" -Force
+.\install_clawhub_windows.ps1 -CodexHome "D:\ClawHubHome" -Force
 ```
 
-## Openclaw 安装与调用
-- 该目录可直接作为 Openclaw skill 安装。
-- Openclaw 元数据文件：`agents/openai.yaml`。
-- Openclaw 入口脚本：`scripts/openclaw_entry.py`（通过环境变量转为 CLI 参数并调用 `learn_papers.py`）。
+## ClawHub / Openclaw 安装与调用
+- 该目录可直接作为 ClawHub / Openclaw skill 安装。
+- 元数据文件：`agents/openai.yaml`。
+- 入口脚本：`scripts/openclaw_entry.py`（通过环境变量转为 CLI 参数并调用 `learn_papers.py`）。
 
 示例（Windows / PowerShell）：
 ```powershell
-$env:OPENCLAW_INPUT_DIR = "D:\sci文献数据"
-$env:OPENCLAW_DAYS = "1"
-$env:OPENCLAW_DRY_RUN = "1"
+$env:CLAWHUB_INPUT_DIR = "D:\sci文献数据"
+$env:CLAWHUB_DAYS = "1"
+$env:CLAWHUB_DRY_RUN = "1"
+$env:CLAWHUB_MANUAL_TRIGGER = "1"
 python scripts/openclaw_entry.py
 ```
 
-支持的环境变量：
-- `OPENCLAW_INPUT_DIR`
-- `OPENCLAW_DAYS`
-- `OPENCLAW_DRY_RUN`
-- `OPENCLAW_FORCE`
-- `OPENCLAW_VERBOSE`
-- `OPENCLAW_MAX_FILES`
-- `OPENCLAW_MAX_PAGES`
-- `OPENCLAW_STOP_ON_BIAS`
-- `OPENCLAW_FEEDBACK_FILE`
+支持的环境变量（优先读取 `CLAWHUB_*`，并兼容 `OPENCLAW_*`）：
+- `CLAWHUB_INPUT_DIR` / `OPENCLAW_INPUT_DIR`
+- `CLAWHUB_DAYS` / `OPENCLAW_DAYS`
+- `CLAWHUB_DRY_RUN` / `OPENCLAW_DRY_RUN`
+- `CLAWHUB_FORCE` / `OPENCLAW_FORCE`
+- `CLAWHUB_VERBOSE` / `OPENCLAW_VERBOSE`
+- `CLAWHUB_MAX_FILES` / `OPENCLAW_MAX_FILES`
+- `CLAWHUB_MAX_PAGES` / `OPENCLAW_MAX_PAGES`
+- `CLAWHUB_STOP_ON_BIAS` / `OPENCLAW_STOP_ON_BIAS`
+- `CLAWHUB_FEEDBACK_FILE` / `OPENCLAW_FEEDBACK_FILE`
+- `CLAWHUB_MANUAL_TRIGGER` / `OPENCLAW_MANUAL_TRIGGER`（默认 `1`）
 
 
 ### 反馈文件格式（JSON）
