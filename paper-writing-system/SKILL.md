@@ -1,5 +1,6 @@
 ---
 name: paper-writing-system
+version: 0.2
 description: 手动触发的科研论文学习与SCI写作能力沉淀skill。用于扫描近N天PDF、识别Article/Review、抽象写作模式、提取知识并沉淀到memory与skills文件，强调质量控制与保守抽取。
 ---
 
@@ -59,6 +60,7 @@ description: 手动触发的科研论文学习与SCI写作能力沉淀skill。�
   - `result`
   - `reasoning`
   - `transition`
+- `reasoning` 必须尽量体现“证据信号 -> 推断语句”。
 - 明确 Result1 → Result2 → Result3 推进链。
 
 ### 5.4 Discussion 推理模式
@@ -139,7 +141,7 @@ python scripts/learn_papers.py --input-dir "D:\\sci文献数据" --days 1 --verb
 - `runtime/`: 运行时产物（memory / skills / generated_examples / processed_files）
 
 ## 13) 注意事项
-- 当前为 v0.1 skeleton：规则引擎 + 占位抽取，保证可运行与可维护。
+- 当前为 v0.2：规则引擎 + 占位抽取，保证可运行与可维护。
 - 针对Nature等复杂排版，默认采用 `PyMuPDF` block提取增强鲁棒性。
 - 后续可替换文本提取器（如更强PDF parser）与LLM语义解析器（见脚本TODO）。
 
@@ -164,10 +166,10 @@ python scripts/learn_papers.py --input-dir "D:\\sci文献数据" --days 1 --verb
 - 支持下一轮通过 `--feedback-file` 注入人工反馈，修正学习方向并决定是否允许沉淀。
 
 
-## 16) Openclaw 集成约定
-- 本 skill 设计为可直接安装到 Openclaw。
+## 16) ClawHub / Openclaw 集成约定
+- 本 skill 设计为可直接安装到 ClawHub / Openclaw。
 - UI 元数据文件：`agents/openai.yaml`。
-- 推荐入口：`scripts/openclaw_entry.py`（读取 `OPENCLAW_*` 环境变量后调用 `learn_papers.py`）。
-- Windows 安装脚本：`install_openclaw_windows.ps1` / `install_openclaw_windows.bat`（底层调用 `scripts/install_openclaw.py`）。
+- 推荐入口：`scripts/openclaw_entry.py`（优先读取 `CLAWHUB_*`，兼容 `OPENCLAW_*` 环境变量后调用 `learn_papers.py`）。
+- Windows 安装脚本：`install_clawhub_windows.ps1` / `install_clawhub_windows.bat`（底层调用 `scripts/install_openclaw.py`）。
 - 安装脚本支持 `--with-venv` 自动配置安装目录依赖环境。
 - 入口脚本必须保持“手动触发”语义，不得引入自动定时调度。

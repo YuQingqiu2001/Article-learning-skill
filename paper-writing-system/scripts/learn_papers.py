@@ -1,4 +1,4 @@
-"""Manual entrypoint for paper-writing-system v0.1 skeleton."""
+"""Manual entrypoint for paper-writing-system v0.2."""
 from __future__ import annotations
 
 import argparse

@@ -1,6 +1,6 @@
 """AI review guard for post-learning bias checks.
 
-v0.1 behavior:
+v0.2 behavior:
 - Runs immediately after each single-paper analysis.
 - Uses conservative rule checks as a placeholder for real AI model verification.
 - If potential bias is detected, emits human-facing questions.

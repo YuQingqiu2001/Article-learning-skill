@@ -1,8 +1,8 @@
-"""Simple installer for Openclaw/Codex skill directory.
+"""Simple installer for ClawHub/Openclaw/Codex skill directory.
 
 Usage (Windows):
   python scripts/install_openclaw.py
-  python scripts/install_openclaw.py --codex-home "C:\\Users\\me\\.codex"
+  python scripts/install_openclaw.py --codex-home "C:\\Users\\me\\.clawhub"
   python scripts/install_openclaw.py --with-venv --force
 """
 from __future__ import annotations
@@ -28,10 +28,13 @@ REQUIRED_FILES = [
 def resolve_codex_home(user_input: str = "") -> Path:
     if user_input:
         return Path(user_input).expanduser().resolve()
+    env_clawhub = os.getenv("CLAWHUB_HOME", "").strip()
+    if env_clawhub:
+        return Path(env_clawhub).expanduser().resolve()
     env = os.getenv("CODEX_HOME", "").strip()
     if env:
         return Path(env).expanduser().resolve()
-    return (Path.home() / ".codex").resolve()
+    return (Path.home() / ".clawhub").resolve()
 
 
 def install_skill(codex_home: Path, force: bool = False) -> Path:
@@ -64,8 +67,8 @@ def setup_venv_and_deps(target: Path) -> None:
 
 
 def parse_args() -> argparse.Namespace:
-    p = argparse.ArgumentParser(description="Install paper-writing-system into Openclaw/Codex skills directory")
-    p.add_argument("--codex-home", default="", help="Override CODEX_HOME path")
+    p = argparse.ArgumentParser(description="Install paper-writing-system into ClawHub/Openclaw/Codex skills directory")
+    p.add_argument("--codex-home", default="", help="Override CLAWHUB_HOME/CODEX_HOME path")
     p.add_argument("--force", action="store_true", help="Overwrite existing installation")
     p.add_argument("--dry-run", action="store_true", help="Print actions only")
     p.add_argument("--with-venv", action="store_true", help="Create .venv and install requirements in installed skill")
@@ -74,11 +77,11 @@ def parse_args() -> argparse.Namespace:
 
 def main() -> int:
     args = parse_args()
-    codex_home = resolve_codex_home(args.codex_home)
-    target = codex_home / "skills" / SKILL_NAME
+    skill_home = resolve_codex_home(args.codex_home)
+    target = skill_home / "skills" / SKILL_NAME
 
     if args.dry_run:
-        print(f"[dry-run] codex_home = {codex_home}")
+        print(f"[dry-run] skill_home = {skill_home}")
         print(f"[dry-run] target = {target}")
         print("[dry-run] validate required files after install")
         if args.with_venv:
@@ -86,7 +89,7 @@ def main() -> int:
         return 0
 
     try:
-        installed = install_skill(codex_home, force=args.force)
+        installed = install_skill(skill_home, force=args.force)
         ok, missing = validate_install(installed)
         if not ok:
             print(f"Install failed validation. Missing files: {missing}")
