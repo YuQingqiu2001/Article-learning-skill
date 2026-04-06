@@ -149,23 +149,25 @@ class TestAIReviewGuard(unittest.TestCase):
 
 
 class TestOpenclawEntry(unittest.TestCase):
-    def test_build_args_from_env(self) -> None:
+    def test_build_args_from_env_prefers_clawhub(self) -> None:
         import os
 
         backup = dict(os.environ)
         try:
-            os.environ["OPENCLAW_INPUT_DIR"] = r"D:\sci文献数据"
-            os.environ["OPENCLAW_DAYS"] = "2"
-            os.environ["OPENCLAW_DRY_RUN"] = "1"
-            os.environ["OPENCLAW_FORCE"] = "1"
-            os.environ["OPENCLAW_VERBOSE"] = "1"
-            os.environ["OPENCLAW_MAX_FILES"] = "3"
-            os.environ["OPENCLAW_STOP_ON_BIAS"] = "1"
-            os.environ["OPENCLAW_FEEDBACK_FILE"] = "feedback.json"
-            os.environ["OPENCLAW_MAX_PAGES"] = "25"
+            os.environ["OPENCLAW_INPUT_DIR"] = r"D:\legacy"
+            os.environ["CLAWHUB_INPUT_DIR"] = r"D:\sci文献数据"
+            os.environ["CLAWHUB_DAYS"] = "2"
+            os.environ["CLAWHUB_DRY_RUN"] = "1"
+            os.environ["CLAWHUB_FORCE"] = "1"
+            os.environ["CLAWHUB_VERBOSE"] = "1"
+            os.environ["CLAWHUB_MAX_FILES"] = "3"
+            os.environ["CLAWHUB_STOP_ON_BIAS"] = "1"
+            os.environ["CLAWHUB_FEEDBACK_FILE"] = "feedback.json"
+            os.environ["CLAWHUB_MAX_PAGES"] = "25"
 
             args = build_args_from_env()
             self.assertIn("--input-dir", args)
+            self.assertIn(r"D:\sci文献数据", args)
             self.assertIn("--days", args)
             self.assertIn("--max-files", args)
             self.assertIn("--max-pages", args)
@@ -218,15 +220,21 @@ class TestInstaller(unittest.TestCase):
         import os
 
         backup = os.environ.get("CODEX_HOME")
+        backup_clawhub = os.environ.get("CLAWHUB_HOME")
         try:
+            os.environ["CLAWHUB_HOME"] = "./tmp_clawhub_home_test"
             os.environ["CODEX_HOME"] = "./tmp_codex_home_test"
             resolved = resolve_codex_home("")
-            self.assertTrue(str(resolved).endswith("tmp_codex_home_test"))
+            self.assertTrue(str(resolved).endswith("tmp_clawhub_home_test"))
         finally:
             if backup is None:
                 os.environ.pop("CODEX_HOME", None)
             else:
                 os.environ["CODEX_HOME"] = backup
+            if backup_clawhub is None:
+                os.environ.pop("CLAWHUB_HOME", None)
+            else:
+                os.environ["CLAWHUB_HOME"] = backup_clawhub
 
     def test_install_skill_dry_target(self) -> None:
         with tempfile.TemporaryDirectory() as td:
